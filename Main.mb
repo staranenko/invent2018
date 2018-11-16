@@ -1,6 +1,6 @@
 '//&Инвентаризация2018menuMain&Приложение0100
 	'//Сопоставление участков...MenuItemMatchingPlotПункт подменю0100
-	'//О программе...MenuItemAboutПункт подменю0110
+	'//О программе...MenuItemAboutПункт подменю0100
 	'//-menuSeparator1-0100
 	'//Вы&ходmenuExitВы&ход0100
 '//{$MAIN MENU SUB}

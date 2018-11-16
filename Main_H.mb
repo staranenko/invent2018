@@ -1,3 +1,4 @@
+Include "Dialog1.def"
 Include "DialogAbout.def"
 Include "Main.def"
 '////////////////////////////////////////
@@ -24,7 +25,7 @@ Sub menuExit_OnClick
 End Sub
 
 Sub MenuItemMatchingPlot_OnClick
-
+    Call Dialog1_Execute
 End Sub
 
 Sub MenuItemAbout_OnClick

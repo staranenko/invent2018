@@ -1,8 +1,26 @@
 Include "Dialog1.def"
 
+Include "..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
+Include "..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
+
+
 'Не редактируйте нижеследующие закомментированные строки!
 '//{$DLG_HANDLERS Dialog1.mb}
 
+Global Debug As logical
+
+Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
+Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
+
+Declare Sub LoadIni
+Declare Sub SaveIni
+Declare Sub GetDialogElements
+Declare Sub SetDialogElements
+
+Declare function SelectProjection(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
+Declare Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
+
+Dim realyCoordSys As string
 
 Sub Dialog1_OnShow
 
@@ -23,3 +41,64 @@ End Sub
 Sub Dialog1btnCancel_OnClick
 
 End Sub
+
+Sub GetDialogElements
+
+End Sub
+
+Sub SetDialogElements
+
+End Sub
+
+Sub LoadIni
+    Dim PachApplicationMBX, FullINIFileName As String
+    Dim FormName, KeyString, ValueString As String
+    Dim GetIniKey As String
+
+    PachApplicationMBX = ApplicationDirectory$()
+    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+End Sub
+
+Sub SaveIni
+    Dim PachApplicationMBX, FullINIFileName As String
+    Dim FormName, KeyString, ValueString As String
+    Dim SetIniKey As String
+
+End Sub
+
+Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
+    If tableinfo(TableName, TAB_INFO_MAPPABLE) = false Then
+       'Note "Таблица '" + TableName + "' не содержит графических объектов. Обработка остановлена."
+       Exit Sub
+    End If
+    realyCoordSys = SelectProjection(setType, TableName, FrontWindow())
+    'Note realyCoordSys
+    If realyCoordSys <> "Ошибка" Then
+       'Note "Результат: "  + realyCoordSys
+       run command "Set CoordSys " + realyCoordSys
+    Else
+       'Note "ошибка определения системы координат..."
+    end If
+    'Print realyCoordSys
+End Sub
+
+function SelectProjection(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
+   Dim realyTableName As string
+   Do Case Metod
+      Case "Объект"
+           If tableinfo(TableName, TAB_INFO_TEMP) Then
+              realyTableName = selectioninfo(SEL_INFO_TABLENAME)
+           Else
+               realyTableName = TableName
+           End If
+           realyCoordSys = WhatSystemOfCoordinates(realyTableName)
+      Case "Окно"
+           realyCoordSys = WhatSystemOfCoordinatesWindow(WinowsNumber)
+      Case "Выбор"
+
+      Case Else
+
+   End Case
+   SelectProjection = realyCoordSys
+End Function
