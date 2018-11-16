@@ -47,6 +47,19 @@ Dim realyCoordSys As string
 
 Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
 
+' Диалоговые элементы
+Type ListInfo
+   Name as string
+   Num as integer
+End Type
+
+Dim KadNumberCol as ListInfo
+Dim InfringementCol as ListInfo
+Dim TablePhotogrametry as ListInfo
+Dim TableOrthophoto as ListInfo
+Dim Tolerance as float
+'/ Диалоговые элементы
+
 Sub Dialog1_OnShow
     Alter Control PopupMenu1 Disable
     Alter Control PopupMenu2 Disable
@@ -119,12 +132,69 @@ End Sub
 
 
 Sub GetDialogElements
-    Debug = ReadControlValue(CheckBoxDebug)
+   Debug = ReadControlValue(CheckBoxDebug)
+   TablePhotogrametry.Num = ReadControlValue(myTablesComboBox2)
+   TablePhotogrametry.Name = myTablesComboBox2_saLayers(TablePhotogrametry.Num)
+   TableOrthophoto.Num = ReadControlValue(myTablesComboBox1)
+   TableOrthophoto.Name = myTablesComboBox1_saLayers(TableOrthophoto.Num)
+   KadNumberCol.Num = ReadControlValue(PopupMenu1)
+   KadNumberCol.Name = TableColumns_1(KadNumberCol.Num)
+   InfringementCol.Num = ReadControlValue(PopupMenu2)
+   InfringementCol.Name = TableColumns_1(InfringementCol.Num)
+   Tolerance = val(ReadControlValue(EditTextTolerance))
+
+   if Debug Then
+      Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
+      Print "TablePhotogrametry.Name: " + TablePhotogrametry.Name
+      Print "TableOrthophoto.Num: " + str$(TableOrthophoto.Num)
+      Print "TableOrthophoto.Num: " + TableOrthophoto.Num
+      Print "KadNumberCol.Num: " + str$(KadNumberCol.Num)
+      Print "KadNumberCol.Name: " + KadNumberCol.Name
+      Print "InfringementCol.Num: " + str$(InfringementCol.Num)
+      Print "InfringementCol.Name: " + InfringementCol.Name
+      Print "Tolerance: " + str$(Tolerance)
+   End if
 End Sub
 
 
 Sub SetDialogElements
-    Alter Control CheckBoxDebug Value Debug
+	Dim iTable, iCol as integer
+   Alter Control CheckBoxDebug Value Debug
+   ALter Control EditTextTolerance Value str$(Tolerance)
+
+   if TablePhotogrametry.Num > 0 then
+      for iTable = 1 to myTablesComboBox2_LayerCount
+         if myTablesComboBox2_saLayers(iTable) = TablePhotogrametry.Name then
+            Alter Control myTablesComboBox2 Value iTable
+         end if 
+      Next
+   end If
+
+   if TableOrthophoto.Num > 0 then
+      for iTable = 1 to myTablesComboBox1_LayerCount
+         if myTablesComboBox1_saLayers(iTable) = TableOrthophoto.Name then
+            Alter Control myTablesComboBox1 Value iTable
+            Call myTablesComboBox1_OnClick
+
+            ' TODO: Вынести в функцию поиск номера в списка но названеию элемента
+            if KadNumberCol.Num > 0 then
+               for iCol = 1 to UBound(TableColumns_1)
+                  if TableColumns_1(iCol) = KadNumberCol.Name then
+                     Alter Control PopupMenu1 Value iCol
+                  end if
+               next
+            end if 
+
+            if InfringementCol.Num > 0 then
+               for iCol = 1 to UBound(TableColumns_1)
+                  if TableColumns_1(iCol) = InfringementCol.Name then
+                     Alter Control PopupMenu2 Value iCol
+                  end if
+               next
+            end if
+         end if
+      next
+   end If
 End Sub
 
 
@@ -194,6 +264,7 @@ Sub myTablesComboBox1_OnClick
       Alter Control PopupMenu1 Enable
       Alter Control PopupMenu2 Title From Variable FullColumnsInfo_1
       Alter Control PopupMenu2 Enable
+      ' TODO: Попробовать установить предыдущие поля
    End If
 End Sub
 

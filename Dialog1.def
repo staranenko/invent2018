@@ -9,7 +9,7 @@ Define   myTablesComboBox1   4
 Define   myTablesComboBox2   5
 Define   PopupMenu1   6
 Define   PopupMenu2   7
-Define   EditText1   8
+Define   EditTextTolerance   8
 Define   StaticText2   9
 Define   StaticText3   10
 Define   StaticText4   11

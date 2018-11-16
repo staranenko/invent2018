@@ -60,8 +60,8 @@ Component=1
      Calling PopupMenu2_OnClick
 '//{$Control End}
    Control EditText
-     ID EditText1
-     Value "EditText1"
+     ID EditTextTolerance
+     Value "EditTextTolerance"
      Position 146, 218
      Width 121 Height 21
 '//{$Control End}
