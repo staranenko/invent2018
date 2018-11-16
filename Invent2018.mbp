@@ -6,3 +6,5 @@ Module=ToolBars.mbo
 Module=ToolBars_H.mbo
 Module=Dialog1.mb
 Module=Dialog1_H.mbo
+Module=DialogAbout.mb
+Module=DialogAbout_H.mbo

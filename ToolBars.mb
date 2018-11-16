@@ -1,4 +1,5 @@
-'//Панель инструментов №1ToolBarNumberOne110
+'//Инвентаризация2018ToolBarInvent2018110
+	'//1-1-134PashButtonMatchingPlotСопоставление участков...010
 	'//1275-133ToolBtnExitВыход010
 '//{$TOOLBARS MODULE}
 'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
@@ -9,7 +10,13 @@ Include "Icons.def"
 Sub CreateToolBars
 
 Call BeforeToolBarsCreate
-Create ButtonPad "Панель инструментов №1" As
+Create ButtonPad "Инвентаризация2018" As
+   PushButton
+      Calling PashButtonMatchingPlot_OnClick
+      ID PashButtonMatchingPlot
+      HelpMsg  "Сопоставление участков... \n Сопоставление участков..."
+      Enable
+
    PushButton
       Calling ToolBtnExit_OnClick
       ID ToolBtnExit

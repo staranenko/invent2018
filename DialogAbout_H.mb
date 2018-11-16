@@ -1,0 +1,23 @@
+Include "MAPBASIC.DEF"
+Include "DialogAbout.def"
+
+'Не редактируйте нижеследующие закомментированные строки!
+'//{$DLG_HANDLERS DialogAbout.mb}
+
+
+Sub DialogAbout_OnShow
+    'Alter Control EditTextAbout1 Value ApplicationName$()
+    Alter Control EditTextAbout2 Value "MapBasic " + str$(SystemInfo(SYS_INFO_APPVERSION)/100)
+End Sub
+
+Sub DialogAbout_OnOKModalResult
+
+End Sub
+
+Sub DialogAbout_OnCancelModalResult
+
+End Sub
+
+Sub DialogAboutbtnOK_OnClick
+
+End Sub

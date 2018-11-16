@@ -1,0 +1,58 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG DialogAbout}
+Include "MapBasic.def"
+Include "DialogAbout.def"
+Sub DialogAbout_Execute
+
+Dialog
+ Title "О программе Инвентаризация 2018"
+ Width 253 Height 121
+ Calling DialogAbout_OnShow
+'//{$Controls}
+   Control OKButton
+     ID DialogAboutbtnOK
+     Title "Закрыть"
+     Position 195, 100
+     Width 50 Height 15
+     Calling DialogAboutbtnOK_OnClick
+'//{$Control End}
+   Control StaticText
+     ID StaticTextAbout_2
+     Title "Средство разработки:"
+     Position 7, 11
+     Width 89 Height 8
+'//{$Control End}
+   Control EditText
+     ID EditTextAbout2
+     Value "EditText1"
+     Position 99, 9
+     Width 145 Height 13
+     Disable
+'//{$Control End}
+   Control StaticText
+     ID StaticTextAbiut3
+     Title "Разработчик: Тараненко Сергей      tars@mail.ru     +79133796814"
+     Position 7, 30
+     Width 225 Height 8
+'//{$Control End}
+   Control StaticText
+     ID StaticTextAbout6
+     Title "__________________________________________________________________________________"
+     Position 7, 86
+     Width 237 Height 10
+'//{$Control End}
+   Control EditText
+     ID EditTextAbout1
+     Value "Программа разработана по заказу СГУГиТ для выполнения работ по инвентаризации."
+     Position 7, 43
+     Width 237 Height 41
+     Disable
+'//{$Control End}
+
+If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
+   call DialogAbout_OnOKModalResult
+Else 
+   call DialogAbout_OnCancelModalResult
+End If
+
+End Sub

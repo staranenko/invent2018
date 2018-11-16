@@ -4,12 +4,14 @@
 
 '//Buttons&ToolBars IDs
 '////////////////////////////////////////
-Define	ToolBarNumberOne	1000	
-Define	ToolBtnExit	1001	
+Define	ToolBarInvent2018	1000	
+Define	PashButtonMatchingPlot	1001	
+Define	ToolBtnExit	1002	
 
 '//Handlers Declaration
 Declare Sub CreateToolBars
 Declare Sub BeforeToolBarsCreate
 Declare Sub AfterToolBarsCreate
 '//Buttons Handlers Declaration
+Declare Sub PashButtonMatchingPlot_OnClick
 Declare Sub ToolBtnExit_OnClick

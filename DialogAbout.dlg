@@ -1,0 +1,46 @@
+Dialog
+ Title "О программе Инвентаризация 2018"
+ Width 396 Height 236
+ Position 342, 117
+ Calling DialogAbout_OnShow
+CenterDisplay
+'//{$Controls}
+   Control OKButton
+     ID DialogAboutbtnOK
+     Title "Закрыть"
+     Position 292, 163
+     Width 75 Height 25
+     Calling DialogAboutbtnOK_OnClick
+'//{$Control End}
+   Control StaticText
+     ID StaticTextAbout_2
+     Title "Средство разработки:"
+     Position 10, 18
+     Width 134 Height 13
+'//{$Control End}
+   Control EditText
+     ID EditTextAbout2
+     Value "EditText1"
+     Position 148, 15
+     Width 218 Height 21
+     Disable
+'//{$Control End}
+   Control StaticText
+     ID StaticTextAbiut3
+     Title "Разработчик: Тараненко Сергей      tars@mail.ru     +79133796814"
+     Position 10, 48
+     Width 337 Height 13
+'//{$Control End}
+   Control StaticText
+     ID StaticTextAbout6
+     Title "__________________________________________________________________________________"
+     Position 10, 139
+     Width 356 Height 17
+'//{$Control End}
+   Control EditText
+     ID EditTextAbout1
+     Value "Программа разработана по заказу СГУГиТ для выполнения работ по инвентаризации."
+     Position 10, 70
+     Width 356 Height 66
+     Disable
+'//{$Control End}

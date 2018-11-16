@@ -1,0 +1,19 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG_CTRLS&SUBS_DEF}
+
+'//Dialog Controls IDs
+Define   DialogAboutbtnOK   1
+Define   StaticTextAbout_2   2
+Define   EditTextAbout2   3
+Define   StaticTextAbiut3   4
+Define   StaticTextAbout6   5
+Define   EditTextAbout1   6
+
+'//Dialog DialogAbout Handlers Declaration
+Declare Sub DialogAbout_Execute
+Declare Sub DialogAbout_OnShow
+Declare Sub DialogAbout_OnOKModalResult
+Declare Sub DialogAbout_OnCancelModalResult
+
+'//Controls Handlers Declaration
+Declare Sub DialogAboutbtnOK_OnClick
