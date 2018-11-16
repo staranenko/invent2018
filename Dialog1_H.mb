@@ -1,3 +1,4 @@
+Include "MapBasic.def"
 Include "Dialog1.def"
 
 Include "..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
@@ -6,6 +7,26 @@ Include "..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFun
 
 'Не редактируйте нижеследующие закомментированные строки!
 '//{$DLG_HANDLERS Dialog1.mb}
+
+'//{$BEGIN GLOBALS FOR CONTROL myTablesComboBox2}
+Global myTablesComboBox2_sTableName As String
+Global myTablesComboBox2_sTablePath As String
+Global myTablesComboBox2_saLayers() As String
+Global myTablesComboBox2_WinID As Integer
+Global myTablesComboBox2_CurrTable As String
+Global myTablesComboBox2_LayerCount As Integer
+Global myTablesComboBox2_I As Integer
+'//{$END GLOBALS FOR CONTROL myTablesComboBox2}
+
+'//{$BEGIN GLOBALS FOR CONTROL myTablesComboBox1}
+Global myTablesComboBox1_sTableName As String
+Global myTablesComboBox1_sTablePath As String
+Global myTablesComboBox1_saLayers() As String
+Global myTablesComboBox1_WinID As Integer
+Global myTablesComboBox1_CurrTable As String
+Global myTablesComboBox1_LayerCount As Integer
+Global myTablesComboBox1_I As Integer
+'//{$END GLOBALS FOR CONTROL myTablesComboBox1}
 
 Global Debug As logical
 
@@ -20,35 +41,92 @@ Declare Sub SetDialogElements
 Declare function SelectProjection(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
 Declare Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
 
+Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+
 Dim realyCoordSys As string
 
+Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
+
 Sub Dialog1_OnShow
+    Alter Control PopupMenu1 Disable
+    Alter Control PopupMenu2 Disable
+'//{$BEGIN INIT CODE FOR CONTROL myTablesComboBox2}
+   ReDim myTablesComboBox2_saLayers(0)
+   myTablesComboBox2_WinID = FrontWindow()
+   If myTablesComboBox2_WinID Then
+      myTablesComboBox2_LayerCount = NumTables()
+   Else
+      myTablesComboBox2_LayerCount = 0
+      Alter Control myTablesComboBox2 Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( myTablesComboBox2_LayerCount <> 0) Then
+      ReDim myTablesComboBox2_saLayers(myTablesComboBox2_LayerCount)
+      For myTablesComboBox2_i = 1 to myTablesComboBox2_LayerCount
+         myTablesComboBox2_saLayers(myTablesComboBox2_i) = TableInfo(myTablesComboBox2_i, TAB_INFO_NAME)
+      Next
+      Alter Control myTablesComboBox2 Title From Variable myTablesComboBox2_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL myTablesComboBox2}
+
+'//{$BEGIN INIT CODE FOR CONTROL myTablesComboBox1}
+   ReDim myTablesComboBox1_saLayers(0)
+   myTablesComboBox1_WinID = FrontWindow()
+   If myTablesComboBox1_WinID Then
+      myTablesComboBox1_LayerCount = NumTables()
+   Else
+      myTablesComboBox1_LayerCount = 0
+      Alter Control myTablesComboBox1 Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( myTablesComboBox1_LayerCount <> 0) Then
+      ReDim myTablesComboBox1_saLayers(myTablesComboBox1_LayerCount)
+      For myTablesComboBox1_i = 1 to myTablesComboBox1_LayerCount
+         myTablesComboBox1_saLayers(myTablesComboBox1_i) = TableInfo(myTablesComboBox1_i, TAB_INFO_NAME)
+      Next
+      Alter Control myTablesComboBox1 Title From Variable myTablesComboBox1_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL myTablesComboBox1}
+
+    Call myTablesComboBox1_OnClick
+    Call myTablesComboBox1_OnClick
+
+    Call LoadIni
+    Call SetDialogElements
+
+    If Debug Then Print "-------------------------------" End If
 
 End Sub
+
 
 Sub Dialog1_OnOKModalResult
 
 End Sub
 
+
 Sub Dialog1_OnCancelModalResult
 
 End Sub
 
-Sub Dialog1btnOK_OnClick
 
+Sub Dialog1btnOK_OnClick
+    Call GetDialogElements
+    Call SaveIni
 End Sub
+
 
 Sub Dialog1btnCancel_OnClick
 
 End Sub
 
-Sub GetDialogElements
 
+Sub GetDialogElements
+    Debug = ReadControlValue(CheckBoxDebug)
 End Sub
+
 
 Sub SetDialogElements
-
+    Alter Control CheckBoxDebug Value Debug
 End Sub
+
 
 Sub LoadIni
     Dim PachApplicationMBX, FullINIFileName As String
@@ -60,12 +138,14 @@ Sub LoadIni
 
 End Sub
 
+
 Sub SaveIni
     Dim PachApplicationMBX, FullINIFileName As String
     Dim FormName, KeyString, ValueString As String
     Dim SetIniKey As String
 
 End Sub
+
 
 Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
     If tableinfo(TableName, TAB_INFO_MAPPABLE) = false Then
@@ -82,6 +162,7 @@ Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
     end If
     'Print realyCoordSys
 End Sub
+
 
 function SelectProjection(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
    Dim realyTableName As string
@@ -102,3 +183,86 @@ function SelectProjection(byval Metod as string, byval TableName as string, byva
    End Case
    SelectProjection = realyCoordSys
 End Function
+
+
+Sub myTablesComboBox1_OnClick
+   If UBound(myTablesComboBox1_saLayers) > 0 Then
+      myTablesComboBox1_sTableName = myTablesComboBox1_saLayers(ReadControlValue(myTablesComboBox1))
+      'print "myTablesComboBox1_sTableName ="+myTablesComboBox1_sTableName
+      Call SelectTable(myTablesComboBox1_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
+      Alter Control PopupMenu1 Title From Variable FullColumnsInfo_1
+      Alter Control PopupMenu1 Enable
+      Alter Control PopupMenu2 Title From Variable FullColumnsInfo_1
+      Alter Control PopupMenu2 Enable
+   End If
+End Sub
+
+
+Sub myTablesComboBox2_OnClick
+   If UBound(myTablesComboBox2_saLayers) > 0 Then
+      myTablesComboBox2_sTableName = myTablesComboBox2_saLayers(ReadControlValue(myTablesComboBox2))
+      'print "myTablesComboBox2_sTableName ="+myTablesComboBox2_sTableName
+   End If
+End Sub
+
+
+Sub PopupMenu1_OnClick
+
+End Sub
+
+
+Sub PopupMenu2_OnClick
+
+End Sub
+
+
+Sub CheckBoxDebug_OnClick
+
+End Sub
+
+
+Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+     Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
+     Dim SpaceString As String
+         ReDim FullColumnsInfo(0)
+         ReDim TableColumns(0)
+         ReDim TypeColumns(0)
+         For i_counter = 1 to NumCols(TableName)
+             ReDim TableColumns(UBound(TableColumns)+1)
+             ReDim TypeColumns(UBound(TypeColumns)+1)
+             TableColumns(i_counter) = ColumnInfo(TableName,"COL"+i_counter,COL_INFO_NAME)
+             Do Case  ColumnInfo(TableName,"COL"+i_counter,COL_INFO_TYPE)
+                      Case COL_TYPE_CHAR
+                           TypeColumns(i_counter) = "Символьный"
+                      Case COL_TYPE_DECIMAL
+                           TypeColumns(i_counter) = "Десятичный"
+                      Case COL_TYPE_FLOAT
+                           TypeColumns(i_counter) = "Вещественный"
+                      Case COL_TYPE_INTEGER
+                           TypeColumns(i_counter) = "Целочисленный (4 байт)"
+                      Case COL_TYPE_SMALLINT
+                           TypeColumns(i_counter) = "Короткое целое число (2 байт)"
+                      Case COL_TYPE_DATE
+                           TypeColumns(i_counter) = "Дата"
+                      Case COL_TYPE_LOGICAL
+                           TypeColumns(i_counter) = "Логический"
+                      Case COL_TYPE_GRAPHIC
+                           TypeColumns(i_counter) = "Специальный тип колонки (Obj)"
+                      Case Else
+                           Note "Ошибка чтения таблицы " + TableName
+                           Exit Sub
+             End Case
+         Next
+         For i_counter = 1 to NumCols(TableName) - 1
+             i_MaxLen = Maximum(Len(TableColumns(i_counter)),Len(TableColumns(i_counter + 1)))
+             MaxLen = Maximum(MaxLen,i_MaxLen)
+         Next
+         For i_counter = 1 to NumCols(TableName)
+             ReDim FullColumnsInfo(UBound(FullColumnsInfo)+1)
+             SpaceString = ""
+             For j_counter = 1 to Fix((MaxLen - Len(TableColumns(i_counter)))*1.8)
+                 SpaceString = SpaceString + " "
+             Next
+             FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
+         Next
+End Sub

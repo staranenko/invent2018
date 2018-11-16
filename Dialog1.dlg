@@ -1,21 +1,123 @@
 Dialog
- Title "Новый диалог"
- Width 400 Height 350
- Position 191, 115
+ Title "Сопоставление участков"
+ Width 454 Height 345
+ Position 364, 135
  Calling Dialog1_OnShow
 CenterDisplay
 '//{$Controls}
    Control OKButton
      ID Dialog1btnOK
-     Title "OK"
-     Position 304, 5
-     Width 75 Height 25
+     Title "Сопоставить участки"
+     Position 212, 271
+     Width 130 Height 25
      Calling Dialog1btnOK_OnClick
 '//{$Control End}
    Control CancelButton
      ID Dialog1btnCancel
      Title "Отмена"
-     Position 304, 35
+     Position 354, 271
      Width 75 Height 25
      Calling Dialog1btnCancel_OnClick
+'//{$Control End}
+   Control StaticText
+     ID StaticText1
+     Title "_______________________________________________________________________________"
+     Position 5, 249
+     Width 429 Height 13
+'//{$Control End}
+   Control PopupMenu
+     ID myTablesComboBox1
+     Title ""
+     Position 76, 106
+     Width 343 Height 21
+     Value 0
+     Calling myTablesComboBox1_OnClick
+Component=1
+'//{$Control End}
+   Control PopupMenu
+     ID myTablesComboBox2
+     Title ""
+     Position 75, 34
+     Width 342 Height 21
+     Value 0
+     Calling myTablesComboBox2_OnClick
+Component=1
+'//{$Control End}
+   Control PopupMenu
+     ID PopupMenu1
+     Title ""
+     Position 192, 136
+     Width 225 Height 21
+     Value 0
+     Calling PopupMenu1_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID PopupMenu2
+     Title ""
+     Position 192, 166
+     Width 225 Height 21
+     Value 0
+     Calling PopupMenu2_OnClick
+'//{$Control End}
+   Control EditText
+     ID EditText1
+     Value "EditText1"
+     Position 146, 218
+     Width 121 Height 21
+'//{$Control End}
+   Control StaticText
+     ID StaticText2
+     Title "Таблица"
+     Position 20, 109
+     Width 56 Height 13
+'//{$Control End}
+   Control StaticText
+     ID StaticText3
+     Title "Поле с кадастровым номером"
+     Position 21, 139
+     Width 167 Height 13
+'//{$Control End}
+   Control StaticText
+     ID StaticText4
+     Title "Поле с нарушением"
+     Position 22, 170
+     Width 123 Height 13
+'//{$Control End}
+   Control StaticText
+     ID StaticText5
+     Title "Таблица"
+     Position 18, 38
+     Width 53 Height 13
+'//{$Control End}
+   Control StaticText
+     ID StaticText6
+     Title "Ширина радиуса поиска"
+     Position 11, 221
+     Width 129 Height 13
+'//{$Control End}
+   Control CheckBox
+     ID CheckBoxDebug
+     Title "Отладка"
+     Position 12, 276
+     Width 79 Height 13
+     Value 1
+     Calling CheckBoxDebug_OnClick
+'//{$Control End}
+   Control GroupBox
+     Position 8, 84
+     Width 421 Height 119
+     ID GroupBox1
+     Title "Участки с атрибутами"
+'//{$Control End}
+   Control GroupBox
+     Position 8, 7
+     Width 421 Height 66
+     ID GroupBox2
+     Title "Участки без атрибутов"
+'//{$Control End}
+   Control StaticText
+     ID StaticText7
+     Title "м."
+     Position 273, 222
+     Width 54 Height 13
 '//{$Control End}
