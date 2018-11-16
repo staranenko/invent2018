@@ -1,0 +1,21 @@
+Dialog
+ Title "Новый диалог"
+ Width 400 Height 350
+ Position 191, 115
+ Calling Dialog1_OnShow
+CenterDisplay
+'//{$Controls}
+   Control OKButton
+     ID Dialog1btnOK
+     Title "OK"
+     Position 304, 5
+     Width 75 Height 25
+     Calling Dialog1btnOK_OnClick
+'//{$Control End}
+   Control CancelButton
+     ID Dialog1btnCancel
+     Title "Отмена"
+     Position 304, 35
+     Width 75 Height 25
+     Calling Dialog1btnCancel_OnClick
+'//{$Control End}

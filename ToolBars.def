@@ -1,0 +1,15 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'////////////////////////////////////////
+'//{$TOOLBARS_SUB_DEF}
+
+'//Buttons&ToolBars IDs
+'////////////////////////////////////////
+Define	ToolBarNumberOne	1000	
+Define	ToolBtnExit	1001	
+
+'//Handlers Declaration
+Declare Sub CreateToolBars
+Declare Sub BeforeToolBarsCreate
+Declare Sub AfterToolBarsCreate
+'//Buttons Handlers Declaration
+Declare Sub ToolBtnExit_OnClick

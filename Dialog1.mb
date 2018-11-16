@@ -1,0 +1,33 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG Dialog1}
+Include "MapBasic.def"
+Include "Dialog1.def"
+Sub Dialog1_Execute
+
+Dialog
+ Title "Новый диалог"
+ Width 256 Height 191
+ Calling Dialog1_OnShow
+'//{$Controls}
+   Control OKButton
+     ID Dialog1btnOK
+     Title "OK"
+     Position 203, 3
+     Width 50 Height 15
+     Calling Dialog1btnOK_OnClick
+'//{$Control End}
+   Control CancelButton
+     ID Dialog1btnCancel
+     Title "Отмена"
+     Position 203, 22
+     Width 50 Height 15
+     Calling Dialog1btnCancel_OnClick
+'//{$Control End}
+
+If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
+   call Dialog1_OnOKModalResult
+Else 
+   call Dialog1_OnCancelModalResult
+End If
+
+End Sub

@@ -1,0 +1,8 @@
+[LINK]
+Application=Release\Invent2018.mbx
+Module=Main.mbo
+Module=Main_H.mbo
+Module=ToolBars.mbo
+Module=ToolBars_H.mbo
+Module=Dialog1.mb
+Module=Dialog1_H.mbo

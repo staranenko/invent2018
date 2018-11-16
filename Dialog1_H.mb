@@ -1,0 +1,25 @@
+Include "Dialog1.def"
+
+'Не редактируйте нижеследующие закомментированные строки!
+'//{$DLG_HANDLERS Dialog1.mb}
+
+
+Sub Dialog1_OnShow
+ 
+End Sub
+
+Sub Dialog1_OnOKModalResult
+ 
+End Sub
+
+Sub Dialog1_OnCancelModalResult
+ 
+End Sub
+
+Sub Dialog1btnOK_OnClick
+ 
+End Sub
+
+Sub Dialog1btnCancel_OnClick
+ 
+End Sub

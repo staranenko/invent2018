@@ -1,0 +1,16 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'////////////////////////////////////////
+'//{$MAIN_SUB_DEF}
+
+'//Menu Items IDs
+'////////////////////////////////////////
+Define	menuMain	1000	
+Define	menuSeparator1	1001	
+Define	menuExit	1002	
+
+'//MB Program Handlers Declaration
+Declare Sub Main
+Declare Sub BeforeMenuCreate
+Declare Sub AfterMenuCreate
+'//Menu Items Handlers Declaration
+Declare Sub menuExit_OnClick

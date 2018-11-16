@@ -1,0 +1,22 @@
+'//&ПриложениеmenuMain&Приложение0110
+	'//-menuSeparator1-0110
+	'//Вы&ходmenuExitВы&ход0110
+'//{$MAIN MENU SUB}
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'////////////////////////////////////////
+Include "Main.def"
+Include "ToolBars.def"
+'////////////////////////////////////////
+Sub Main
+
+Call BeforeMenuCreate
+'// Create Menus
+Create Menu "&Приложение" ID menuMain As
+  "(-",
+  "Вы&ход" ID menuExit HelpMsg "Вы&ход" Calling menuExit_OnClick
+Alter Menu Bar Add "&Приложение"
+
+Call AfterMenuCreate
+Call CreateToolBars
+
+End Sub
