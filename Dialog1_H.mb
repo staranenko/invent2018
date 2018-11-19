@@ -176,7 +176,7 @@ Sub SetDialogElements
             Alter Control myTablesComboBox1 Value iTable
             Call myTablesComboBox1_OnClick
 
-            ' TODO: Вынести в функцию поиск номера в списка но названеию элемента
+            ' TODO: Вынести в функцию поиск номера в списка но названию элемента
             if KadNumberCol.Num > 0 then
                for iCol = 1 to UBound(TableColumns_1)
                   if TableColumns_1(iCol) = KadNumberCol.Name then
