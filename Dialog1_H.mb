@@ -38,6 +38,8 @@ Global myTablesComboBox1_LayerCount As Integer
 Global myTablesComboBox1_I As Integer
 '//{$END GLOBALS FOR CONTROL myTablesComboBox1}
 
+DEFINE WorkWithSelectionObject "Выбранные объекты на карте"
+
 Global Debug As logical
 
 Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
@@ -53,6 +55,8 @@ Declare Sub GetAndSetCoordSys(byval TableName as string, byval setType as string
 
 Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
 Declare Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
+Declare Function TableIsOpen(byval Name as string) as logical
+Declare function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualColumn() as logical) as logical
 
 Dim realyCoordSys As string
 
@@ -76,7 +80,14 @@ Dim KadNumberColInKadastr as ListInfo
 Dim Tolerance as float
 '/ Диалоговые элементы
 
+Dim isSelectionObject as Logical
+Dim isEqualColumn(0) as logical
+
+
+
 Sub Dialog1_OnShow
+Dim Tables as integer	
+	
    Alter Control PopupMenu1 Disable
    Alter Control PopupMenu2 Disable
    Alter Control PopupMenu_Kadastr_KadNum Disable
@@ -141,6 +152,14 @@ Sub Dialog1_OnShow
     Call LoadIni
     Call SetDialogElements
 
+    if SelectionInfo(SEL_INFO_NROWS) > 0 then
+      Tables = UBound(myTablesComboBox2_saLayers)
+      Redim myTablesComboBox2_saLayers(Tables + 1)
+      myTablesComboBox2_saLayers(Tables + 1) = WorkWithSelectionObject + " (" + str$(SelectionInfo(SEL_INFO_NROWS)) + " объектов в таблице " + SelectionInfo(SEL_INFO_TABLENAME) + ")"
+      Alter Control myTablesComboBox2 Title From Variable myTablesComboBox2_saLayers
+      Alter Control myTablesComboBox2 Value Tables + 1
+   end if
+
     If Debug Then Print "-------------------------------" End If
 
 End Sub
@@ -157,9 +176,31 @@ End Sub
 
 
 Sub Dialog1btnOK_OnClick
-    Call GetDialogElements
-    Call SaveIni
-   '  TODO: Основной блок решения задачи
+Dim iCount as integer
+   Call GetDialogElements
+   Call SaveIni
+   
+   ReDim isEqualColumn(0)
+
+   if isSelectionObject then
+      if Debug then Print "Работаем с выделенными объектами из таблицы " + SelectionInfo(SEL_INFO_TABLENAME) end if
+      ' TODO: Готовим объекты для работы
+   else
+      if Debug then Print "Работаем со всей таблицей " + TablePhotogrametry.Name end if
+      ' TODO: Готовим таблицу для работы
+   End If
+
+   ' TODO: Основной блок решения задачи
+   if isEqualTableStructure(TableOrthophoto.Name, TablePhotogrametry.Name, isEqualColumn) = false then
+   	if Debug then Print "В проверяемой таблице нет полей из базовой таблицы!" end if
+      ' TODO: Нужно привести таблицу от фотграмметристов к таблице по ортофото (добавить недостающие поля). В массиве isEqualColumn помечено каких полей нет.
+   end if
+
+   if Debug then 
+   	for iCount = 1 to UBound(isEqualColumn)
+   		Print "*** " + ColumnInfo(TableOrthophoto.Name, "COL"+iCount, COL_INFO_NAME) + " - " + str$(isEqualColumn(iCount))
+   	next
+   end if
 End Sub
 
 
@@ -186,6 +227,12 @@ Sub GetDialogElements
    KadNumberColInKadastr.Name = TableColumns_2(KadNumberColInKadastr.Num)
 
    Tolerance = val(ReadControlValue(EditTextTolerance))
+   
+   if (TablePhotogrametry.Num > 0  and TableIsOpen(TablePhotogrametry.Name) = false) then
+      isSelectionObject = true
+   else
+      isSelectionObject = false
+   End If
 
    if Debug Then
       Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
@@ -479,9 +526,11 @@ Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullCo
          Next
 End Sub
 
+
 Sub PopupMenu_Kadastr_KadNum_OnClick
 
 End Sub
+
 
 Sub myTablesBox_Kadastr_OnClick
    If UBound(myTablesBox_Kadastr_saLayers) > 0 Then
@@ -501,9 +550,61 @@ dim iCol as integer
       for iCol = 1 to UBound(ColList)
          if ColList(iCol) = Name then
             ColNumber = iCol
+            Exit Function
          end if
       next
    Else
       ColNumber = 0
    end if
+end function
+
+
+Function TableIsOpen(byval Name as string) as logical
+Dim i as integer
+	
+	for i = 1 to NumTables()
+		if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)	End If
+		if TableInfo(i, TAB_INFO_NAME) = Name then
+			TableIsOpen = true
+			Exit Function
+		End If
+	Next
+	TableIsOpen = false
+	
+	if Debug then Print "Таблица " + Name + " не открыта."	End If
+End Function
+
+
+function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+Dim iColChekingTable, iColBaseTable as integer
+
+	redim isEqualCol(TableInfo(tableBase, TAB_INFO_NCOLS))
+	
+   for iColBaseTable = 1 to TableInfo(tableBase, TAB_INFO_NCOLS)
+   	isEqualCol(iColBaseTable) = false
+   	
+   	if Debug then 
+			Print "Проверяется таблица " + tableBase + " с базовой таблицей " + tableCheking
+	End If
+	
+	for iColChekingTable = 1 to TableInfo(tableCheking, TAB_INFO_NCOLS)
+		if Debug then 
+			Print "......поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " и " + ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)
+		End If
+		
+		if ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) = ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME) then
+			isEqualCol(iColBaseTable) = true
+			exit for
+		end if
+	Next
+   next
+   
+   isEqualTableStructure = true
+   for iColBaseTable = 1 to UBound(isEqualCol)
+   	if isEqualCol(iColBaseTable) = false then
+   		isEqualTableStructure = false
+   		'exit function
+   		if Debug then Print "Поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " в таблице " + tableBase + " нет." end if
+   	End If
+   Next
 end function
