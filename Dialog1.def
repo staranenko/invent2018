@@ -19,6 +19,11 @@ Define   CheckBoxDebug   14
 Define   GroupBox1   15
 Define   GroupBox2   16
 Define   StaticText7   17
+Define   GroupBox3   18
+Define   StaticText9   19
+Define   StaticText10   20
+Define   PopupMenu_Kadastr_KadNum   21
+Define   myTablesBox_Kadastr   22
 
 '//Dialog Dialog1 Handlers Declaration
 Declare Sub Dialog1_Execute
@@ -34,3 +39,5 @@ Declare Sub myTablesComboBox2_OnClick
 Declare Sub PopupMenu1_OnClick
 Declare Sub PopupMenu2_OnClick
 Declare Sub CheckBoxDebug_OnClick
+Declare Sub PopupMenu_Kadastr_KadNum_OnClick
+Declare Sub myTablesBox_Kadastr_OnClick

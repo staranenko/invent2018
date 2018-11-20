@@ -6,27 +6,27 @@ Sub Dialog1_Execute
 
 Dialog
  Title "Сопоставление участков"
- Width 292 Height 188
+ Width 292 Height 252
  Calling Dialog1_OnShow
 '//{$Controls}
    Control OKButton
      ID Dialog1btnOK
      Title "Сопоставить участки"
-     Position 141, 167
+     Position 141, 230
      Width 87 Height 15
      Calling Dialog1btnOK_OnClick
 '//{$Control End}
    Control CancelButton
      ID Dialog1btnCancel
      Title "Отмена"
-     Position 236, 167
+     Position 236, 230
      Width 50 Height 15
      Calling Dialog1btnCancel_OnClick
 '//{$Control End}
    Control StaticText
      ID StaticText1
      Title "_______________________________________________________________________________"
-     Position 3, 153
+     Position 3, 216
      Width 286 Height 8
 '//{$Control End}
    Control PopupMenu
@@ -64,7 +64,7 @@ Dialog
    Control EditText
      ID EditTextTolerance
      Value "EditTextTolerance"
-     Position 97, 134
+     Position 97, 197
      Width 81 Height 13
 '//{$Control End}
    Control StaticText
@@ -94,13 +94,13 @@ Dialog
    Control StaticText
      ID StaticText6
      Title "Ширина радиуса поиска"
-     Position 7, 136
+     Position 7, 199
      Width 86 Height 8
 '//{$Control End}
    Control CheckBox
      ID CheckBoxDebug
      Title "Отладка"
-     Position 8, 170
+     Position 8, 233
      Width 53 Height 8
      Value 1
      Calling CheckBoxDebug_OnClick
@@ -109,19 +109,53 @@ Dialog
      Position 5, 52
      Width 281 Height 73
      ID GroupBox1
-     Title "Участки с атрибутами"
+     Title "Участки с нарушениями"
 '//{$Control End}
    Control GroupBox
      Position 5, 4
      Width 281 Height 41
      ID GroupBox2
-     Title "Участки без атрибутов"
+     Title "Участки от фотограмметристов"
 '//{$Control End}
    Control StaticText
      ID StaticText7
      Title "м."
-     Position 182, 137
+     Position 182, 199
      Width 36 Height 8
+'//{$Control End}
+   Control GroupBox
+     Position 5, 131
+     Width 281 Height 55
+     ID GroupBox3
+     Title "Участки с кадастром"
+'//{$Control End}
+   Control StaticText
+     ID StaticText9
+     Title "Поле с кадастровым номером"
+     Position 14, 165
+     Width 111 Height 8
+'//{$Control End}
+   Control StaticText
+     ID StaticText10
+     Title "Таблица"
+     Position 13, 146
+     Width 37 Height 8
+'//{$Control End}
+   Control PopupMenu
+     ID PopupMenu_Kadastr_KadNum
+     Title ""
+     Position 128, 163
+     Width 150 Height 13
+     Value 0
+     Calling PopupMenu_Kadastr_KadNum_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID myTablesBox_Kadastr
+     Title ""
+     Position 53, 143
+     Width 225 Height 13
+     Value 0
+     Calling myTablesBox_Kadastr_OnClick
 '//{$Control End}
 
 If CommandInfo(CMD_INFO_DLG_OK) = 1 Then

@@ -1,28 +1,28 @@
 Dialog
  Title "Сопоставление участков"
- Width 454 Height 345
- Position 364, 135
+ Width 454 Height 448
+ Position 352, 128
  Calling Dialog1_OnShow
 CenterDisplay
 '//{$Controls}
    Control OKButton
      ID Dialog1btnOK
      Title "Сопоставить участки"
-     Position 212, 271
+     Position 212, 373
      Width 130 Height 25
      Calling Dialog1btnOK_OnClick
 '//{$Control End}
    Control CancelButton
      ID Dialog1btnCancel
      Title "Отмена"
-     Position 354, 271
+     Position 354, 373
      Width 75 Height 25
      Calling Dialog1btnCancel_OnClick
 '//{$Control End}
    Control StaticText
      ID StaticText1
      Title "_______________________________________________________________________________"
-     Position 5, 249
+     Position 5, 351
      Width 429 Height 13
 '//{$Control End}
    Control PopupMenu
@@ -62,7 +62,7 @@ Component=1
    Control EditText
      ID EditTextTolerance
      Value "EditTextTolerance"
-     Position 146, 218
+     Position 146, 320
      Width 121 Height 21
 '//{$Control End}
    Control StaticText
@@ -92,13 +92,13 @@ Component=1
    Control StaticText
      ID StaticText6
      Title "Ширина радиуса поиска"
-     Position 11, 221
+     Position 11, 323
      Width 129 Height 13
 '//{$Control End}
    Control CheckBox
      ID CheckBoxDebug
      Title "Отладка"
-     Position 12, 276
+     Position 12, 378
      Width 79 Height 13
      Value 1
      Calling CheckBoxDebug_OnClick
@@ -107,17 +107,52 @@ Component=1
      Position 8, 84
      Width 421 Height 119
      ID GroupBox1
-     Title "Участки с атрибутами"
+     Title "Участки с нарушениями"
 '//{$Control End}
    Control GroupBox
      Position 8, 7
      Width 421 Height 66
      ID GroupBox2
-     Title "Участки без атрибутов"
+     Title "Участки от фотограмметристов"
 '//{$Control End}
    Control StaticText
      ID StaticText7
      Title "м."
-     Position 273, 222
+     Position 273, 324
      Width 54 Height 13
+'//{$Control End}
+   Control GroupBox
+     Position 8, 213
+     Width 421 Height 89
+     ID GroupBox3
+     Title "Участки с кадастром"
+'//{$Control End}
+   Control StaticText
+     ID StaticText9
+     Title "Поле с кадастровым номером"
+     Position 21, 268
+     Width 167 Height 13
+'//{$Control End}
+   Control StaticText
+     ID StaticText10
+     Title "Таблица"
+     Position 20, 238
+     Width 56 Height 13
+'//{$Control End}
+   Control PopupMenu
+     ID PopupMenu_Kadastr_KadNum
+     Title ""
+     Position 192, 265
+     Width 225 Height 21
+     Value 0
+     Calling PopupMenu_Kadastr_KadNum_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID myTablesBox_Kadastr
+     Title ""
+     Position 79, 233
+     Width 337 Height 21
+     Value 0
+     Calling myTablesBox_Kadastr_OnClick
+Component=1
 '//{$Control End}

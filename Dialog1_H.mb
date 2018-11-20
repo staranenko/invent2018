@@ -8,6 +8,16 @@ Include "..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFun
 'Не редактируйте нижеследующие закомментированные строки!
 '//{$DLG_HANDLERS Dialog1.mb}
 
+'//{$BEGIN GLOBALS FOR CONTROL myTablesBox_Kadastr}
+Global myTablesBox_Kadastr_sTableName As String
+Global myTablesBox_Kadastr_sTablePath As String
+Global myTablesBox_Kadastr_saLayers() As String
+Global myTablesBox_Kadastr_WinID As Integer
+Global myTablesBox_Kadastr_CurrTable As String
+Global myTablesBox_Kadastr_LayerCount As Integer
+Global myTablesBox_Kadastr_I As Integer
+'//{$END GLOBALS FOR CONTROL myTablesBox_Kadastr}
+
 '//{$BEGIN GLOBALS FOR CONTROL myTablesComboBox2}
 Global myTablesComboBox2_sTableName As String
 Global myTablesComboBox2_sTablePath As String
@@ -42,10 +52,12 @@ Declare function SelectProjection(byval Metod as string, byval TableName as stri
 Declare Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
 
 Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+Declare Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
 
 Dim realyCoordSys As string
 
 Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
+Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
 
 ' Диалоговые элементы
 Type ListInfo
@@ -53,16 +65,39 @@ Type ListInfo
    Num as integer
 End Type
 
-Dim KadNumberCol as ListInfo
-Dim InfringementCol as ListInfo
 Dim TablePhotogrametry as ListInfo
 Dim TableOrthophoto as ListInfo
+Dim TableKadastr as ListInfo
+
+Dim KadNumberCol as ListInfo
+Dim InfringementCol as ListInfo
+Dim KadNumberColInKadastr as ListInfo
+
 Dim Tolerance as float
 '/ Диалоговые элементы
 
 Sub Dialog1_OnShow
-    Alter Control PopupMenu1 Disable
-    Alter Control PopupMenu2 Disable
+   Alter Control PopupMenu1 Disable
+   Alter Control PopupMenu2 Disable
+   Alter Control PopupMenu_Kadastr_KadNum Disable
+'//{$BEGIN INIT CODE FOR CONTROL myTablesBox_Kadastr}
+   ReDim myTablesBox_Kadastr_saLayers(0)
+   myTablesBox_Kadastr_WinID = FrontWindow()
+   If myTablesBox_Kadastr_WinID Then
+      myTablesBox_Kadastr_LayerCount = NumTables() 'MapperInfo(myTablesBox_Kadastr_WinID, MAPPER_INFO_LAYERS)
+   Else
+   myTablesBox_Kadastr_LayerCount = 0
+   Alter Control myTablesBox_Kadastr Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( myTablesBox_Kadastr_LayerCount <> 0) Then
+      ReDim myTablesBox_Kadastr_saLayers(myTablesBox_Kadastr_LayerCount)
+      For myTablesBox_Kadastr_i = 1 to myTablesBox_Kadastr_LayerCount
+         myTablesBox_Kadastr_saLayers(myTablesBox_Kadastr_i) = TableInfo(myTablesBox_Kadastr_i, TAB_INFO_NAME) 'LayerInfo(myTablesBox_Kadastr_WinID, myTablesBox_Kadastr_i, LAYER_INFO_NAME)
+      Next
+      Alter Control myTablesBox_Kadastr Title From Variable myTablesBox_Kadastr_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL myTablesBox_Kadastr}
+
 '//{$BEGIN INIT CODE FOR CONTROL myTablesComboBox2}
    ReDim myTablesComboBox2_saLayers(0)
    myTablesComboBox2_WinID = FrontWindow()
@@ -99,8 +134,9 @@ Sub Dialog1_OnShow
    End If
 '//{$END INIT CODE FOR CONTROL myTablesComboBox1}
 
+    Call myTablesComboBox2_OnClick
     Call myTablesComboBox1_OnClick
-    Call myTablesComboBox1_OnClick
+    Call myTablesBox_Kadastr_OnClick
 
     Call LoadIni
     Call SetDialogElements
@@ -123,6 +159,7 @@ End Sub
 Sub Dialog1btnOK_OnClick
     Call GetDialogElements
     Call SaveIni
+   '  TODO: Основной блок решения задачи
 End Sub
 
 
@@ -133,78 +170,157 @@ End Sub
 
 Sub GetDialogElements
    Debug = ReadControlValue(CheckBoxDebug)
+
    TablePhotogrametry.Num = ReadControlValue(myTablesComboBox2)
    TablePhotogrametry.Name = myTablesComboBox2_saLayers(TablePhotogrametry.Num)
    TableOrthophoto.Num = ReadControlValue(myTablesComboBox1)
    TableOrthophoto.Name = myTablesComboBox1_saLayers(TableOrthophoto.Num)
+   TableKadastr.Num = ReadControlValue(myTablesBox_Kadastr)
+   TableKadastr.Name = myTablesBox_Kadastr_saLayers(TableKadastr.Num)
+
    KadNumberCol.Num = ReadControlValue(PopupMenu1)
    KadNumberCol.Name = TableColumns_1(KadNumberCol.Num)
    InfringementCol.Num = ReadControlValue(PopupMenu2)
    InfringementCol.Name = TableColumns_1(InfringementCol.Num)
+   KadNumberColInKadastr.Num = ReadControlValue(PopupMenu_Kadastr_KadNum)
+   KadNumberColInKadastr.Name = TableColumns_2(KadNumberColInKadastr.Num)
+
    Tolerance = val(ReadControlValue(EditTextTolerance))
 
    if Debug Then
       Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
       Print "TablePhotogrametry.Name: " + TablePhotogrametry.Name
       Print "TableOrthophoto.Num: " + str$(TableOrthophoto.Num)
-      Print "TableOrthophoto.Num: " + TableOrthophoto.Num
+      Print "TableOrthophoto.Name: " + TableOrthophoto.Name
       Print "KadNumberCol.Num: " + str$(KadNumberCol.Num)
       Print "KadNumberCol.Name: " + KadNumberCol.Name
       Print "InfringementCol.Num: " + str$(InfringementCol.Num)
       Print "InfringementCol.Name: " + InfringementCol.Name
+      Print "TableKadastr.Num: " + str$(TableKadastr.Num)
+      Print "TableKadastr.Name: " + TableKadastr.Name
+
       Print "Tolerance: " + str$(Tolerance)
    End if
 End Sub
 
 
 Sub SetDialogElements
-	Dim iTable, iCol as integer
+   Dim iTable, ColNum as integer
+
    Alter Control CheckBoxDebug Value Debug
    ALter Control EditTextTolerance Value str$(Tolerance)
 
-   if TablePhotogrametry.Num > 0 then
+   ' if TablePhotogrametry.Num > 0 then
       for iTable = 1 to myTablesComboBox2_LayerCount
          if myTablesComboBox2_saLayers(iTable) = TablePhotogrametry.Name then
             Alter Control myTablesComboBox2 Value iTable
-         end if 
+         end if
       Next
-   end If
+   ' end If
 
-   if TableOrthophoto.Num > 0 then
+   ' if TableOrthophoto.Num > 0 then
       for iTable = 1 to myTablesComboBox1_LayerCount
          if myTablesComboBox1_saLayers(iTable) = TableOrthophoto.Name then
             Alter Control myTablesComboBox1 Value iTable
             Call myTablesComboBox1_OnClick
 
-            ' TODO: Вынести в функцию поиск номера в списка но названию элемента
-            if KadNumberCol.Num > 0 then
-               for iCol = 1 to UBound(TableColumns_1)
-                  if TableColumns_1(iCol) = KadNumberCol.Name then
-                     Alter Control PopupMenu1 Value iCol
-                  end if
-               next
-            end if 
+            Alter Control PopupMenu1 Value ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1)
 
-            if InfringementCol.Num > 0 then
-               for iCol = 1 to UBound(TableColumns_1)
-                  if TableColumns_1(iCol) = InfringementCol.Name then
-                     Alter Control PopupMenu2 Value iCol
-                  end if
-               next
-            end if
+            Alter Control PopupMenu2 Value ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1)
+
          end if
       next
-   end If
+   ' end If
+
+   ' if TableKadastr.Num > 0 then
+      for iTable = 1 to myTablesBox_Kadastr_LayerCount
+         if myTablesBox_Kadastr_saLayers(iTable) = TableKadastr.Name then
+            ALter Control myTablesBox_Kadastr Value iTable
+            call myTablesBox_Kadastr_OnClick
+
+            Alter Control PopupMenu_Kadastr_KadNum Value ColNumber(KadNumberColInKadastr.Num, KadNumberColInKadastr.Name, TableColumns_2)
+
+         end if
+      next
+   ' end if
 End Sub
 
 
 Sub LoadIni
-    Dim PachApplicationMBX, FullINIFileName As String
-    Dim FormName, KeyString, ValueString As String
-    Dim GetIniKey As String
+   Dim PachApplicationMBX, FullINIFileName As String
+   Dim FormName, KeyString, ValueString As String
+   Dim GetIniKey As String
 
-    PachApplicationMBX = ApplicationDirectory$()
-    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+   PachApplicationMBX = ApplicationDirectory$()
+   FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          Debug = true
+       Else
+          Debug = false
+       End If
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Num","0")
+   if GetIniKey <> "" Then
+      TablePhotogrametry.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Name","")
+   if GetIniKey <> "" Then
+      TablePhotogrametry.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Num","0")
+   if GetIniKey <> "" Then
+      TableOrthophoto.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Name","")
+   if GetIniKey <> "" Then
+      TableOrthophoto.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Num","0")
+   if GetIniKey <> "" Then
+      TableKadastr.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Name","")
+   if GetIniKey <> "" Then
+      TableKadastr.Name = GetIniKey
+   end if
+   
+   GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Num","0")
+   if GetIniKey <> "" Then
+      KadNumberCol.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Name","")
+   if GetIniKey <> "" Then
+      KadNumberCol.Name = GetIniKey
+   end if
+   
+   GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Num","0")
+   if GetIniKey <> "" Then
+      InfringementCol.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Name","")
+   if GetIniKey <> "" Then
+      InfringementCol.Name = GetIniKey
+   End If
+   
+   GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Num","0")
+   if GetIniKey <> "" Then
+      KadNumberColInKadastr.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Name","")
+   if GetIniKey <> "" Then
+      KadNumberColInKadastr.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","Tolerance","0")
+   if GetIniKey <> "" Then
+      Tolerance = Val(GetIniKey)
+   End If
 
 End Sub
 
@@ -213,6 +329,31 @@ Sub SaveIni
     Dim PachApplicationMBX, FullINIFileName As String
     Dim FormName, KeyString, ValueString As String
     Dim SetIniKey As String
+
+    PachApplicationMBX = ApplicationDirectory$()
+    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
+
+   SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Num",str$(TablePhotogrametry.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Name",str$(TablePhotogrametry.Name))
+   
+   SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Num",str$(TableOrthophoto.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Name",str$(TableOrthophoto.Name))
+   
+   SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Num",str$(TableKadastr.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Name",str$(TableKadastr.Name))
+   
+   SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Num",str$(KadNumberCol.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Name",str$(KadNumberCol.Name))
+   
+   SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Num",str$(InfringementCol.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Name",str$(InfringementCol.Name))
+   
+   SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Num",str$(KadNumberColInKadastr.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Name",str$(KadNumberColInKadastr.Name))
+   
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры", "Tolerance",str$(Tolerance))
 
 End Sub
 
@@ -262,9 +403,9 @@ Sub myTablesComboBox1_OnClick
       Call SelectTable(myTablesComboBox1_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
       Alter Control PopupMenu1 Title From Variable FullColumnsInfo_1
       Alter Control PopupMenu1 Enable
+
       Alter Control PopupMenu2 Title From Variable FullColumnsInfo_1
       Alter Control PopupMenu2 Enable
-      ' TODO: Попробовать установить предыдущие поля
    End If
 End Sub
 
@@ -337,3 +478,32 @@ Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullCo
              FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
          Next
 End Sub
+
+Sub PopupMenu_Kadastr_KadNum_OnClick
+
+End Sub
+
+Sub myTablesBox_Kadastr_OnClick
+   If UBound(myTablesBox_Kadastr_saLayers) > 0 Then
+      myTablesBox_Kadastr_sTableName = myTablesBox_Kadastr_saLayers(ReadControlValue(myTablesBox_Kadastr))
+      ' print "myTablesBox_Kadastr_sTableName ="+myTablesBox_Kadastr_sTableName
+      Call SelectTable(myTablesBox_Kadastr_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
+      Alter Control PopupMenu_Kadastr_KadNum Title From Variable FullColumnsInfo_2
+      Alter Control PopupMenu_Kadastr_KadNum Enable
+   End If
+End Sub
+
+
+Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
+dim iCol as integer
+   ' note "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList))
+   if Num > 0 then
+      for iCol = 1 to UBound(ColList)
+         if ColList(iCol) = Name then
+            ColNumber = iCol
+         end if
+      next
+   Else
+      ColNumber = 0
+   end if
+end function
