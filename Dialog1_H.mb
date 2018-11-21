@@ -57,6 +57,8 @@ Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns()
 Declare Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
 Declare Function TableIsOpen(byval Name as string) as logical
 Declare function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualColumn() as logical) as logical
+Declare function reStructureTable(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+Declare function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
 
 Dim realyCoordSys As string
 
@@ -176,7 +178,8 @@ End Sub
 
 
 Sub Dialog1btnOK_OnClick
-Dim iCount as integer
+Dim iCount, iObjectInWorkTable as integer
+   
    Call GetDialogElements
    Call SaveIni
    
@@ -184,25 +187,57 @@ Dim iCount as integer
 
    if isSelectionObject then
       if Debug then Print "Работаем с выделенными объектами из таблицы " + SelectionInfo(SEL_INFO_TABLENAME) end if
-      ' TODO: Готовим объекты для работы
+      ' Готовим объекты для работы
          select * from Selection into WorkTable noselect
-         TablePhotogrametry.Name = str$(WorkTable)
+         ' TablePhotogrametry.Name = str$(WorkTable)
+         TablePhotogrametry.Name = SelectionInfo(SEL_INFO_TABLENAME)
    else
       if Debug then Print "Работаем со всей таблицей " + TablePhotogrametry.Name end if
-      ' TODO: Готовим таблицу для работы
+      ' Готовим таблицу для работы
+      select * from TableOrthophoto.Name into WorkTable noselect
    End If
 
-   ' TODO: Основной блок решения задачи
+   ' Подготовка структры таблиц для дальнейшей работы
    if not isEqualTableStructure(TableOrthophoto.Name, TablePhotogrametry.Name, isEqualColumn) then
    	if Debug then Print "В проверяемой таблице нет полей из базовой таблицы!" end if
-      ' TODO: Нужно привести таблицу от фотграмметристов к таблице по ортофото (добавить недостающие поля). В массиве isEqualColumn помечено каких полей нет.
+
+      ' Приведение таблицы от фотограмметристов к таблице по ортофото (добавить недостающие поля). В массиве isEqualColumn помечено каких полей нет.
+      if isSelectionObject then
+         if Not ask("Внимание, требуется добавление полей в таблицу " + TablePhotogrametry.Name + ", что приведет к сбросу выбранных объектов. Вам придется выбрать их заново и повторно запустить обработку.", "Продолжить", "Отменить") then
+            Exit Sub
+         end if
+      end if
+      if Not reStructureTable(TableOrthophoto.Name, TablePhotogrametry.Name, isEqualColumn) then
+         Exit Sub
+      else
+         if isSelectionObject then
+            Note "Поля добавлены. Выберите заново объекты на карте и повторите побработку."
+            Exit Sub
+         end if
+      end if
    end if
 
    if Debug then 
    	for iCount = 1 to UBound(isEqualColumn)
    		Print "*** " + ColumnInfo(TableOrthophoto.Name, "COL"+iCount, COL_INFO_NAME) + " - " + str$(isEqualColumn(iCount))
    	next
+      Print "Будет обработано " + TableInfo(WorkTable, TAB_INFO_NROWS) + " объектов."
    end if
+
+   select * from WorkTable where str$(obj) = "region" into WorkTable noselect
+
+   ' Основной цикл обработки обектов из таблицы WorkTable
+   iObjectInWorkTable = 1
+   Fetch First From WorkTable
+   Do While Not EOT(WorkTable)
+      if Debug then Print "Анализируется объект " + iObjectInWorkTable + "..." end if
+
+      ' TODO: 
+      
+
+      Fetch Next From WorkTable
+      iObjectInWorkTable = iObjectInWorkTable + 1
+   Loop
 
    Close Table WorkTable
 End Sub
@@ -613,3 +648,78 @@ Dim iColChekingTable, iColBaseTable as integer
    Next
 end function
 
+
+function reStructureTable(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+dim iCol, iLayer as integer
+dim columnname, columntype, runString as string
+dim layerInMap, colsAdded as logical
+   layerInMap = false
+   for iLayer = 1 to MapperInfo(FrontWindow(), MAPPER_INFO_LAYERS)
+      if tableCheking = LayerInfo(FrontWindow(), iLayer, LAYER_INFO_NAME) then
+         layerInMap = true
+      end if
+   next
+
+   for iCol = 1 to UBound(isEqualCol)
+      if not isEqualCol(iCol) then
+         if Debug then Print "Name: " + TableColumns_1(iCol) + ", type: " + TypeColumns_1(iCol) end if
+
+         colsAdded = getColType(tableBase, iCol, columnname, columntype)
+
+         if colsAdded then
+            runString = "Alter Table " + tableCheking + " (Add " + columnname + " " + columntype + ") Interactive"
+         end If
+
+         if Debug then Print runString end if
+
+         OnError Goto badAddindColumns
+            Run Command runString
+         OnError Goto 0
+         reStructureTable = true
+      end if
+   next
+
+   if layerInMap and colsAdded then
+      Add Map Layer tableCheking
+   end if
+
+   after_badAddindColumns:
+      Exit function
+
+   badAddindColumns:
+      reStructureTable = false
+      Note "Ошибка при добавлении поля " + TableColumns_1(iCol) + " в таблицу " + tableCheking + ". Возможно таблица не сохранена. Обработка остановлена."
+      resume after_badAddindColumns
+end function
+
+
+function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
+   getColType = false
+   
+   colname = ColumnInfo(table, "COL"+col, COL_INFO_NAME)
+
+   do case ColumnInfo(table, "COL"+col, COL_INFO_TYPE)
+      case COL_TYPE_CHAR
+         coltype = "Char(" + ColumnInfo(table, "COL"+col, COL_INFO_WIDTH) + ")"
+      case COL_TYPE_DECIMAL
+         coltype = "Decimal(" + ColumnInfo(table, "COL"+col, COL_INFO_WIDTH) + "," + ColumnInfo(table, "COL"+col, COL_INFO_DECPLACES) + ")"
+      case COL_TYPE_INTEGER
+         coltype = "Integer"
+      case COL_TYPE_SMALLINT
+         coltype = "SmallInt"
+      case COL_TYPE_DATE
+         coltype = "Date"
+      case COL_TYPE_LOGICAL
+         coltype = "Logical"
+      case COL_TYPE_GRAPHIC
+         coltype = "obj"
+      case COL_TYPE_FLOAT
+         coltype = "Float"
+      case COL_TYPE_TIME
+         coltype = "Time"
+      case COL_TYPE_DATETIME
+         coltype = "DateTime"
+   end case
+
+   getColType = true
+end function
