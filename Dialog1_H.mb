@@ -59,6 +59,7 @@ Declare Function TableIsOpen(byval Name as string) as logical
 Declare function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualColumn() as logical) as logical
 Declare function reStructureTable(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
 Declare function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
+Declare function getColNumber(byval table as string, byval colName as string) as integer
 
 Dim realyCoordSys As string
 
@@ -88,8 +89,8 @@ Dim isEqualColumn(0) as logical
 
 
 Sub Dialog1_OnShow
-Dim Tables as integer	
-	
+Dim Tables as integer
+
    Alter Control PopupMenu1 Disable
    Alter Control PopupMenu2 Disable
    Alter Control PopupMenu_Kadastr_KadNum Disable
@@ -178,11 +179,11 @@ End Sub
 
 
 Sub Dialog1btnOK_OnClick
-Dim iCount, iObjectInWorkTable as integer
-   
+Dim iCount, iObjectInWorkTable, iColCountUpdate, currentCol as integer
+
    Call GetDialogElements
    Call SaveIni
-   
+
    ReDim isEqualColumn(0)
 
    if isSelectionObject then
@@ -194,12 +195,12 @@ Dim iCount, iObjectInWorkTable as integer
    else
       if Debug then Print "Работаем со всей таблицей " + TablePhotogrametry.Name end if
       ' Готовим таблицу для работы
-      select * from TableOrthophoto.Name into WorkTable noselect
+      select * from TablePhotogrametry.Name into WorkTable noselect
    End If
 
    ' Подготовка структры таблиц для дальнейшей работы
    if not isEqualTableStructure(TableOrthophoto.Name, TablePhotogrametry.Name, isEqualColumn) then
-   	if Debug then Print "В проверяемой таблице нет полей из базовой таблицы!" end if
+           if Debug then Print "В проверяемой таблице нет полей из базовой таблицы!" end if
 
       ' Приведение таблицы от фотограмметристов к таблице по ортофото (добавить недостающие поля). В массиве isEqualColumn помечено каких полей нет.
       if isSelectionObject then
@@ -217,29 +218,105 @@ Dim iCount, iObjectInWorkTable as integer
       end if
    end if
 
-   if Debug then 
-   	for iCount = 1 to UBound(isEqualColumn)
-   		Print "*** " + ColumnInfo(TableOrthophoto.Name, "COL"+iCount, COL_INFO_NAME) + " - " + str$(isEqualColumn(iCount))
-   	next
+   if Debug then
+           for iCount = 1 to UBound(isEqualColumn)
+                   Print "*** " + ColumnInfo(TableOrthophoto.Name, "COL"+iCount, COL_INFO_NAME) + " - " + str$(isEqualColumn(iCount))
+           next
       Print "Будет обработано " + TableInfo(WorkTable, TAB_INFO_NROWS) + " объектов."
    end if
 
    select * from WorkTable where str$(obj) = "region" into WorkTable noselect
-
+   select * from TableOrthophoto.Name where str$(obj) = "region" into OrthoTable noselect
+   
+   if Debug then Print "Анализируется на пересечения с " + TableInfo(OrthoTable, TAB_INFO_NROWS) + " объектами." end if
+   
    ' Основной цикл обработки обектов из таблицы WorkTable
    iObjectInWorkTable = 1
    Fetch First From WorkTable
    Do While Not EOT(WorkTable)
       if Debug then Print "Анализируется объект " + iObjectInWorkTable + "..." end if
 
-      ' TODO: 
+      select * from WorkTable where rowid = iObjectInWorkTable into WorkTableOneObject noselect
+
+      ' select * from OrthoTable where OrthoTable.obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable) into selIntesectionOrthophoto
+      select * from TableOrthophoto.Name where str$(obj) = "region" AND obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable) into selIntesectionOrthophoto
       
+      select * from TableKadastr.Name where str$(obj) = "region" AND obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable) into selIntesectionKadastr noselect
+
+      if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) + " объектами с ортофотоплана." end if
+      if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionKadastr, TAB_INFO_NROWS) + " объектами из кадастра." end if
+
+      if TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) < 2 then
+         ' TODO: Обновить поля объекта фотограмметристов
+
+         for iColCountUpdate = 1 to TableInfo(selIntesectionOrthophoto, TAB_INFO_NCOLS)
+            currentCol = getColNumber(WorkTableOneObject, ColumnInfo(selIntesectionOrthophoto, "COL"+iColCountUpdate, COL_INFO_NAME))
+
+            do case ColumnInfo(selIntesectionOrthophoto, "COL"+iColCountUpdate, COL_INFO_TYPE)
+               case COL_TYPE_CHAR
+                  dim valStr as string
+                  valStr = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valStr
+               case COL_TYPE_DECIMAL
+                  dim valDecimal as float
+                  valDecimal = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valDecimal
+               case COL_TYPE_INTEGER
+                  dim valInteger as integer
+                  valInteger = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valInteger
+               case COL_TYPE_SMALLINT
+                  dim valSmallInt as SmallInt
+                  valSmallInt = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valSmallInt
+               case COL_TYPE_DATE
+                  dim valDate as Date
+                  valDate = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valDate
+               case COL_TYPE_LOGICAL
+                  dim vallogical as logical
+                  vallogical = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = vallogical
+               case COL_TYPE_GRAPHIC
+                  dim valObject as object
+                  valObject = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valObject
+               case COL_TYPE_FLOAT
+                  dim valFloat as float
+                  valFloat = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valFloat
+               case COL_TYPE_TIME
+                  dim valTime as Time
+                  valTime = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valTime
+               case COL_TYPE_DATETIME
+                  dim valDateTime as DateTime
+                  valDateTime = selIntesectionOrthophoto.COL(iColCountUpdate)
+                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valDateTime
+            end case
+
+            ' if str <> "" then
+	         '    Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valField
+	         ' end if
+         next
+      else
+         Fetch First From selIntesectionOrthophoto
+         Do While Not EOT(selIntesectionOrthophoto)
+            ' TODO: Анализировать семанику
+
+            Fetch Next From selIntesectionOrthophoto
+         Loop
+      end if
 
       Fetch Next From WorkTable
       iObjectInWorkTable = iObjectInWorkTable + 1
+      close table WorkTableOneObject
+      ' close table selIntesectionOrthophoto
+      ' close table selIntesectionKadastr
    Loop
 
    Close Table WorkTable
+   Close Table OrthoTable
 End Sub
 
 
@@ -266,7 +343,7 @@ Sub GetDialogElements
    KadNumberColInKadastr.Name = TableColumns_2(KadNumberColInKadastr.Num)
 
    Tolerance = val(ReadControlValue(EditTextTolerance))
-   
+
    if (TablePhotogrametry.Num > 0  and Not TableIsOpen(TablePhotogrametry.Name)) then
       isSelectionObject = true
    else
@@ -375,7 +452,7 @@ Sub LoadIni
    if GetIniKey <> "" Then
       TableKadastr.Name = GetIniKey
    end if
-   
+
    GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Num","0")
    if GetIniKey <> "" Then
       KadNumberCol.Num = Val(GetIniKey)
@@ -384,7 +461,7 @@ Sub LoadIni
    if GetIniKey <> "" Then
       KadNumberCol.Name = GetIniKey
    end if
-   
+
    GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Num","0")
    if GetIniKey <> "" Then
       InfringementCol.Num = Val(GetIniKey)
@@ -393,7 +470,7 @@ Sub LoadIni
    if GetIniKey <> "" Then
       InfringementCol.Name = GetIniKey
    End If
-   
+
    GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Num","0")
    if GetIniKey <> "" Then
       KadNumberColInKadastr.Num = Val(GetIniKey)
@@ -423,22 +500,22 @@ Sub SaveIni
 
    SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Num",str$(TablePhotogrametry.Num))
    SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Name",str$(TablePhotogrametry.Name))
-   
+
    SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Num",str$(TableOrthophoto.Num))
    SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Name",str$(TableOrthophoto.Name))
-   
+
    SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Num",str$(TableKadastr.Num))
    SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Name",str$(TableKadastr.Name))
-   
+
    SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Num",str$(KadNumberCol.Num))
    SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Name",str$(KadNumberCol.Name))
-   
+
    SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Num",str$(InfringementCol.Num))
    SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Name",str$(InfringementCol.Name))
-   
+
    SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Num",str$(KadNumberColInKadastr.Num))
    SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Name",str$(KadNumberColInKadastr.Name))
-   
+
    SetIniKey = IniWriteString(FullINIFileName,"Параметры", "Tolerance",str$(Tolerance))
 
 End Sub
@@ -483,15 +560,27 @@ End Function
 
 
 Sub myTablesComboBox1_OnClick
+dim col1, col2 as integer
    If UBound(myTablesComboBox1_saLayers) > 0 Then
       myTablesComboBox1_sTableName = myTablesComboBox1_saLayers(ReadControlValue(myTablesComboBox1))
       'print "myTablesComboBox1_sTableName ="+myTablesComboBox1_sTableName
       Call SelectTable(myTablesComboBox1_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
       Alter Control PopupMenu1 Title From Variable FullColumnsInfo_1
       Alter Control PopupMenu1 Enable
+      
+      col1 = ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1)
+      if col1 > 0 then 
+         Alter Control PopupMenu1 Value col1
+      end if
+         Print str$(ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1))
 
       Alter Control PopupMenu2 Title From Variable FullColumnsInfo_1
       Alter Control PopupMenu2 Enable
+      col2 = ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1)
+      if col2 > 0 then
+         Alter Control PopupMenu2 Value Col2
+      end If
+         Print str$(ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1))
    End If
 End Sub
 
@@ -600,51 +689,51 @@ end function
 
 Function TableIsOpen(byval Name as string) as logical
 Dim i as integer
-	
-	for i = 1 to NumTables()
-		if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)	End If
-		if TableInfo(i, TAB_INFO_NAME) = Name then
-			TableIsOpen = true
-			Exit Function
-		End If
-	Next
-	TableIsOpen = false
-	
-	if Debug then Print "Таблица " + Name + " не открыта."	End If
+
+        for i = 1 to NumTables()
+                if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)        End If
+                if TableInfo(i, TAB_INFO_NAME) = Name then
+                        TableIsOpen = true
+                        Exit Function
+                End If
+        Next
+        TableIsOpen = false
+
+        if Debug then Print "Таблица " + Name + " не открыта."        End If
 End Function
 
 
 function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
 Dim iColChekingTable, iColBaseTable as integer
 
-	redim isEqualCol(TableInfo(tableBase, TAB_INFO_NCOLS))
-	
+        redim isEqualCol(TableInfo(tableBase, TAB_INFO_NCOLS))
+
    for iColBaseTable = 1 to TableInfo(tableBase, TAB_INFO_NCOLS)
-   	isEqualCol(iColBaseTable) = false
-   	
-   	if Debug then 
-			Print "Проверяется таблица " + tableBase + " с базовой таблицей " + tableCheking
-	End If
-	
-	for iColChekingTable = 1 to TableInfo(tableCheking, TAB_INFO_NCOLS)
-		if Debug then 
-			Print "......поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " и " + ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)
-		End If
-		
-		if ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) = ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME) then
-			isEqualCol(iColBaseTable) = true
-			exit for
-		end if
-	Next
+           isEqualCol(iColBaseTable) = false
+
+           if Debug then
+                        Print "Проверяется таблица " + tableBase + " с базовой таблицей " + tableCheking
+        End If
+
+        for iColChekingTable = 1 to TableInfo(tableCheking, TAB_INFO_NCOLS)
+                if Debug then
+                        Print "......поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " и " + ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)
+                End If
+
+                if ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) = ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME) then
+                        isEqualCol(iColBaseTable) = true
+                        exit for
+                end if
+        Next
    next
-   
+
    isEqualTableStructure = true
    for iColBaseTable = 1 to UBound(isEqualCol)
-   	if isEqualCol(iColBaseTable) = false then
-   		isEqualTableStructure = false
-   		'exit function
-   		if Debug then Print "Поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " в таблице " + tableBase + " нет." end if
-   	End If
+           if isEqualCol(iColBaseTable) = false then
+                   isEqualTableStructure = false
+                   'exit function
+                   if Debug then Print "Поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " в таблице " + tableBase + " нет." end if
+           End If
    Next
 end function
 
@@ -695,7 +784,7 @@ end function
 
 function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
    getColType = false
-   
+
    colname = ColumnInfo(table, "COL"+col, COL_INFO_NAME)
 
    do case ColumnInfo(table, "COL"+col, COL_INFO_TYPE)
@@ -722,4 +811,16 @@ function getColType(byval table as string, byval col as integer, colname as stri
    end case
 
    getColType = true
+end function
+
+function getColNumber(byval table as string, byval colName as string) as integer
+dim iCol as integer
+
+   for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
+      if colName = ColumnInfo(table, "COL"+iCol, COL_INFO_NAME) then
+         getColNumber = iCol
+         Exit function
+      end if
+   next
+
 end function

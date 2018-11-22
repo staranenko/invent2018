@@ -32,8 +32,8 @@ Dialog
    Control PopupMenu
      ID myTablesComboBox1
      Title ""
-     Position 51, 65
-     Width 229 Height 13
+     Position 50, 65
+     Width 228 Height 13
      Value 0
      Calling myTablesComboBox1_OnClick
 '//{$Control End}
@@ -64,26 +64,26 @@ Dialog
    Control EditText
      ID EditTextTolerance
      Value "EditTextTolerance"
-     Position 97, 197
-     Width 81 Height 13
+     Position 101, 197
+     Width 77 Height 13
 '//{$Control End}
    Control StaticText
      ID StaticText2
      Title "Таблица"
-     Position 13, 67
-     Width 37 Height 8
+     Position 12, 67
+     Width 35 Height 8
 '//{$Control End}
    Control StaticText
      ID StaticText3
      Title "Поле с кадастровым номером"
-     Position 14, 86
+     Position 12, 86
      Width 111 Height 8
 '//{$Control End}
    Control StaticText
      ID StaticText4
      Title "Поле с нарушением"
-     Position 15, 105
-     Width 82 Height 8
+     Position 12, 105
+     Width 114 Height 8
 '//{$Control End}
    Control StaticText
      ID StaticText5
@@ -94,8 +94,8 @@ Dialog
    Control StaticText
      ID StaticText6
      Title "Ширина радиуса поиска"
-     Position 7, 199
-     Width 86 Height 8
+     Position 12, 199
+     Width 89 Height 8
 '//{$Control End}
    Control CheckBox
      ID CheckBoxDebug
@@ -132,14 +132,14 @@ Dialog
    Control StaticText
      ID StaticText9
      Title "Поле с кадастровым номером"
-     Position 14, 165
-     Width 111 Height 8
+     Position 12, 165
+     Width 115 Height 8
 '//{$Control End}
    Control StaticText
      ID StaticText10
      Title "Таблица"
-     Position 13, 146
-     Width 37 Height 8
+     Position 12, 146
+     Width 35 Height 8
 '//{$Control End}
    Control PopupMenu
      ID PopupMenu_Kadastr_KadNum
@@ -152,8 +152,8 @@ Dialog
    Control PopupMenu
      ID myTablesBox_Kadastr
      Title ""
-     Position 53, 143
-     Width 225 Height 13
+     Position 50, 143
+     Width 228 Height 13
      Value 0
      Calling myTablesBox_Kadastr_OnClick
 '//{$Control End}

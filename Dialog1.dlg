@@ -28,8 +28,8 @@ CenterDisplay
    Control PopupMenu
      ID myTablesComboBox1
      Title ""
-     Position 76, 106
-     Width 343 Height 21
+     Position 75, 106
+     Width 342 Height 21
      Value 0
      Calling myTablesComboBox1_OnClick
 Component=1
@@ -62,26 +62,26 @@ Component=1
    Control EditText
      ID EditTextTolerance
      Value "EditTextTolerance"
-     Position 146, 320
-     Width 121 Height 21
+     Position 152, 320
+     Width 115 Height 21
 '//{$Control End}
    Control StaticText
      ID StaticText2
      Title "Таблица"
-     Position 20, 109
-     Width 56 Height 13
+     Position 18, 109
+     Width 53 Height 13
 '//{$Control End}
    Control StaticText
      ID StaticText3
      Title "Поле с кадастровым номером"
-     Position 21, 139
+     Position 18, 139
      Width 167 Height 13
 '//{$Control End}
    Control StaticText
      ID StaticText4
      Title "Поле с нарушением"
-     Position 22, 170
-     Width 123 Height 13
+     Position 18, 170
+     Width 171 Height 13
 '//{$Control End}
    Control StaticText
      ID StaticText5
@@ -92,8 +92,8 @@ Component=1
    Control StaticText
      ID StaticText6
      Title "Ширина радиуса поиска"
-     Position 11, 323
-     Width 129 Height 13
+     Position 18, 323
+     Width 133 Height 13
 '//{$Control End}
    Control CheckBox
      ID CheckBoxDebug
@@ -130,14 +130,14 @@ Component=1
    Control StaticText
      ID StaticText9
      Title "Поле с кадастровым номером"
-     Position 21, 268
-     Width 167 Height 13
+     Position 18, 268
+     Width 173 Height 13
 '//{$Control End}
    Control StaticText
      ID StaticText10
      Title "Таблица"
-     Position 20, 238
-     Width 56 Height 13
+     Position 18, 238
+     Width 53 Height 13
 '//{$Control End}
    Control PopupMenu
      ID PopupMenu_Kadastr_KadNum
@@ -150,8 +150,8 @@ Component=1
    Control PopupMenu
      ID myTablesBox_Kadastr
      Title ""
-     Position 79, 233
-     Width 337 Height 21
+     Position 75, 233
+     Width 342 Height 21
      Value 0
      Calling myTablesBox_Kadastr_OnClick
 Component=1
