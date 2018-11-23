@@ -60,6 +60,7 @@ Declare function isEqualTableStructure(byval tableBase, tableCheking as string, 
 Declare function reStructureTable(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
 Declare function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
 Declare function getColNumber(byval table as string, byval colName as string) as integer
+Declare function CopyFieldValue(byval source as string, byval receiver as string, byval UpdateColumnNumber as integer) as logical
 
 Dim realyCoordSys As string
 
@@ -179,7 +180,8 @@ End Sub
 
 
 Sub Dialog1btnOK_OnClick
-Dim iCount, iObjectInWorkTable, iColCountUpdate, currentCol as integer
+Dim iCount, iObjectInWorkTable, iColCountUpdate, currentCol, errorCol, InfringementNumber as integer
+dim badObject, goodObject as object
 
    Call GetDialogElements
    Call SaveIni
@@ -246,66 +248,59 @@ Dim iCount, iObjectInWorkTable, iColCountUpdate, currentCol as integer
       if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) + " объектами с ортофотоплана." end if
       if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionKadastr, TAB_INFO_NROWS) + " объектами из кадастра." end if
 
-      if TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) < 2 then
-         ' TODO: Обновить поля объекта фотограмметристов
-
+      if TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) < 2 and TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) > 0 then
          for iColCountUpdate = 1 to TableInfo(selIntesectionOrthophoto, TAB_INFO_NCOLS)
-            currentCol = getColNumber(WorkTableOneObject, ColumnInfo(selIntesectionOrthophoto, "COL"+iColCountUpdate, COL_INFO_NAME))
-
-            do case ColumnInfo(selIntesectionOrthophoto, "COL"+iColCountUpdate, COL_INFO_TYPE)
-               case COL_TYPE_CHAR
-                  dim valStr as string
-                  valStr = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valStr
-               case COL_TYPE_DECIMAL
-                  dim valDecimal as float
-                  valDecimal = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valDecimal
-               case COL_TYPE_INTEGER
-                  dim valInteger as integer
-                  valInteger = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valInteger
-               case COL_TYPE_SMALLINT
-                  dim valSmallInt as SmallInt
-                  valSmallInt = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valSmallInt
-               case COL_TYPE_DATE
-                  dim valDate as Date
-                  valDate = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valDate
-               case COL_TYPE_LOGICAL
-                  dim vallogical as logical
-                  vallogical = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = vallogical
-               case COL_TYPE_GRAPHIC
-                  dim valObject as object
-                  valObject = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valObject
-               case COL_TYPE_FLOAT
-                  dim valFloat as float
-                  valFloat = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valFloat
-               case COL_TYPE_TIME
-                  dim valTime as Time
-                  valTime = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valTime
-               case COL_TYPE_DATETIME
-                  dim valDateTime as DateTime
-                  valDateTime = selIntesectionOrthophoto.COL(iColCountUpdate)
-                  Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valDateTime
-            end case
-
-            ' if str <> "" then
-	         '    Update WorkTableOneObject Set ColumnInfo(WorkTableOneObject, "COL"+currentCol, COL_INFO_NAME) = valField
-	         ' end if
+            
+            if CopyFieldValue(str$(selIntesectionOrthophoto), str$(WorkTableOneObject), iColCountUpdate) then
+               if Debug then Print "Поля успешно обновлены." end if
+            else
+               Note "Не удалось обновить поля в таблице " + TablePhotogrametry.Name + "."
+            end if
          next
+         
+         goodObject = WorkTableOneObject.obj
+            
+         Alter Object goodObject Info  OBJ_INFO_BRUSH, MakeBrush(15, GREEN, -1)
+         Alter Object goodObject Info  OBJ_INFO_PEN, MakePen(2, 2, GREEN)
+            
+         Update WorkTableOneObject set obj = goodObject
+         
       else
-         Fetch First From selIntesectionOrthophoto
-         Do While Not EOT(selIntesectionOrthophoto)
-            ' TODO: Анализировать семанику
+      	' TODO: Сгруппировать по кадастровому номеру и если больше 1 то пометить ошибкой. Если 1 то сгруппировать по нарушению. Если 1, то из этой таблицы обновить объект от фотограмметристов.
+         select * from selIntesectionOrthophoto Group By KadNumberCol.Name into groupFromKadNumberCol
+         
+         If Debug then Print "Найдено " + str$(TableInfo(groupFromKadNumberCol, TAB_INFO_NROWS)) + " кадастровых участков." end if
+         
+         InfringementNumber = TableInfo(groupFromKadNumberCol, TAB_INFO_NROWS)
+         
+         if InfringementNumber > 1 then
+            ' Раскрашиваем в красный, т.к. невозможно объеденить
+            badObject = WorkTableOneObject.obj
+            
+            Alter Object badObject Info  OBJ_INFO_BRUSH, MakeBrush(107, RED, -1)
+            Alter Object badObject Info  OBJ_INFO_PEN, MakePen(5, 2, RED)
+            
+            Update WorkTableOneObject set obj = badObject
+            
+            errorCol = getColNumber(WorkTableOneObject, InfringementCol.Name)
+            Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! " + str$(InfringementNumber) + " нарушения."
+         else
+            ' TODO: Проверяем на совпадение по нарушению.
+            if InfringementNumber > 0 then
 
-            Fetch Next From selIntesectionOrthophoto
-         Loop
+            end If
+         end if
+
+                        Fetch First From selIntesectionOrthophoto
+                        Do While Not EOT(selIntesectionOrthophoto)
+                           ' TODO: Анализировать семанику
+                           
+                           
+
+                           Fetch Next From selIntesectionOrthophoto
+                        Loop
+
+         ' close table groupFromKadNumberCol
       end if
 
       Fetch Next From WorkTable
@@ -813,6 +808,7 @@ function getColType(byval table as string, byval col as integer, colname as stri
    getColType = true
 end function
 
+
 function getColNumber(byval table as string, byval colName as string) as integer
 dim iCol as integer
 
@@ -822,5 +818,71 @@ dim iCol as integer
          Exit function
       end if
    next
+
+end function
+
+
+function CopyFieldValue(byval sourceName as string, byval receiverName as string, byval UpdateColumnNumber as integer) as logical
+dim currentCol as integer
+	select * from sourceName into source noselect
+	select * from receiverName into receiver noselect
+
+   currentCol = getColNumber(receiver, ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_NAME))
+
+   OnError Goto badUpdate
+   do case ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_TYPE)
+      case COL_TYPE_CHAR
+         dim valStr as string
+         valStr = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valStr
+      case COL_TYPE_DECIMAL
+         dim valDecimal as float
+         valDecimal = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDecimal
+      case COL_TYPE_INTEGER
+         dim valInteger as integer
+         valInteger = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valInteger
+      case COL_TYPE_SMALLINT
+         dim valSmallInt as SmallInt
+         valSmallInt = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valSmallInt
+      case COL_TYPE_DATE
+         dim valDate as Date
+         valDate = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDate
+      case COL_TYPE_LOGICAL
+         dim vallogical as logical
+         vallogical = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = vallogical
+      case COL_TYPE_GRAPHIC
+         dim valObject as object
+         valObject = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valObject
+      case COL_TYPE_FLOAT
+         dim valFloat as float
+         valFloat = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valFloat
+      case COL_TYPE_TIME
+         dim valTime as Time
+         valTime = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valTime
+      case COL_TYPE_DATETIME
+         dim valDateTime as DateTime
+         valDateTime = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDateTime
+   end case
+   
+   Close Table receiver
+   Close Table source
+
+   CopyFieldValue = true
+   
+   after_badUpdate:
+   Exit Function
+
+   badUpdate:
+      CopyFieldValue = false
+      resume after_badUpdate
 
 end function
