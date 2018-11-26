@@ -12,7 +12,7 @@ Dialog
    Control OKButton
      ID Dialog1btnOK
      Title "Сопоставить участки"
-     Position 141, 230
+     Position 147, 230
      Width 87 Height 15
      Calling Dialog1btnOK_OnClick
 '//{$Control End}
@@ -64,8 +64,9 @@ Dialog
    Control EditText
      ID EditTextTolerance
      Value "EditTextTolerance"
-     Position 101, 197
-     Width 77 Height 13
+     Position 217, 193
+     Width 52 Height 13
+     Hide
 '//{$Control End}
    Control StaticText
      ID StaticText2
@@ -94,14 +95,15 @@ Dialog
    Control StaticText
      ID StaticText6
      Title "Ширина радиуса поиска"
-     Position 12, 199
-     Width 89 Height 8
+     Position 185, 194
+     Width 30 Height 8
+     Hide
 '//{$Control End}
    Control CheckBox
      ID CheckBoxDebug
      Title "Отладка"
-     Position 8, 233
-     Width 53 Height 8
+     Position 97, 234
+     Width 45 Height 8
      Value 1
      Calling CheckBoxDebug_OnClick
 '//{$Control End}
@@ -120,12 +122,13 @@ Dialog
    Control StaticText
      ID StaticText7
      Title "м."
-     Position 182, 199
-     Width 36 Height 8
+     Position 272, 196
+     Width 12 Height 8
+     Hide
 '//{$Control End}
    Control GroupBox
      Position 5, 131
-     Width 281 Height 55
+     Width 281 Height 54
      ID GroupBox3
      Title "Участки с кадастром"
 '//{$Control End}
@@ -156,6 +159,21 @@ Dialog
      Width 228 Height 13
      Value 0
      Calling myTablesBox_Kadastr_OnClick
+'//{$Control End}
+   Control Button
+     ID Dialog1btnCutOnly
+     Title "Обрезать кадастром"
+     Position 6, 230
+     Width 84 Height 15
+     Calling Dialog1btnCutOnly_OnClick
+'//{$Control End}
+   Control CheckBox
+     ID Dialog1CBoxCutKadastr
+     Title "Обрезать кадастром при сопоставлении"
+     Position 11, 196
+     Width 159 Height 8
+     Value 0
+     Calling Dialog1CBoxCutKadastr_OnClick
 '//{$Control End}
 
 If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
