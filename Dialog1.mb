@@ -161,19 +161,19 @@ Dialog
      Calling myTablesBox_Kadastr_OnClick
 '//{$Control End}
    Control Button
-     ID Dialog1btnCutOnly
+     ID Dialog1btnEraseOnly
      Title "Обрезать кадастром"
      Position 6, 230
      Width 84 Height 15
-     Calling Dialog1btnCutOnly_OnClick
+     Calling Dialog1btnEraseOnly_OnClick
 '//{$Control End}
    Control CheckBox
-     ID Dialog1CBoxCutKadastr
+     ID Dialog1CBoxEraseKadastr
      Title "Обрезать кадастром при сопоставлении"
      Position 11, 196
      Width 159 Height 8
      Value 0
-     Calling Dialog1CBoxCutKadastr_OnClick
+     Calling Dialog1CBoxEraseKadastr_OnClick
 '//{$Control End}
 
 If CommandInfo(CMD_INFO_DLG_OK) = 1 Then

@@ -24,8 +24,8 @@ Define   StaticText9   19
 Define   StaticText10   20
 Define   PopupMenu_Kadastr_KadNum   21
 Define   myTablesBox_Kadastr   22
-Define   Dialog1btnCutOnly   23
-Define   Dialog1CBoxCutKadastr   24
+Define   Dialog1btnEraseOnly   23
+Define   Dialog1CBoxEraseKadastr   24
 
 '//Dialog Dialog1 Handlers Declaration
 Declare Sub Dialog1_Execute
@@ -43,5 +43,5 @@ Declare Sub PopupMenu2_OnClick
 Declare Sub CheckBoxDebug_OnClick
 Declare Sub PopupMenu_Kadastr_KadNum_OnClick
 Declare Sub myTablesBox_Kadastr_OnClick
-Declare Sub Dialog1btnCutOnly_OnClick
-Declare Sub Dialog1CBoxCutKadastr_OnClick
+Declare Sub Dialog1btnEraseOnly_OnClick
+Declare Sub Dialog1CBoxEraseKadastr_OnClick
