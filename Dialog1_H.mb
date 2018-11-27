@@ -63,6 +63,7 @@ Declare function reStructureTable(byval tableBase, tableCheking as string, isEqu
 Declare function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
 Declare function getColNumber(byval table as string, byval colName as string) as integer
 Declare function CopyFieldValue(byval source as string, byval receiver as string, byval UpdateColumnNumber as integer) as logical
+Declare function CopyFieldValueAndConcat(byval sourceName as string, byval receiverName as string, byval UpdateColumnNumber as integer) as logical
 Declare Sub MainThread
 Declare function prepareInfrigement(byval str as string) as string
 
@@ -86,6 +87,9 @@ Dim InfringementCol as ListInfo
 Dim KadNumberColInKadastr as ListInfo
 
 Dim Tolerance as float
+Dim CutByKadastr as logical
+Dim CutByKadastrOnce as logical
+Dim UpdateFields as logical
 '/ Диалоговые элементы
 
 Dim isSelectionObject as Logical
@@ -186,6 +190,9 @@ End Sub
 Sub Dialog1btnOK_OnClick
 Dim iCount, currentCol as integer
 dim selectionNameTemp as string
+
+   UpdateFields = true ' При нажании на текущую кнопку, всегда обновлять поля в таблице.
+   CutByKadastrOnce = CutByKadastr ' При нажатии на текущую кнопку, обрезать по кадастру в зависимости от устновки переключателя.
 
    Call GetDialogElements
    Call SaveIni
@@ -357,12 +364,12 @@ dim concotinationString, valStr as string
                   ' Note "errorCol: " + str$(errorCol) + ", concotinationString: " + concotinationString
 
                   for iColCountUpdate = 1 to TableInfo(selIntesectionOrthophoto, TAB_INFO_NCOLS)
-                        if CopyFieldValue(str$(groupFromInfriggementCol), str$(WorkTableOneObject), iColCountUpdate) then
-                           if Debug then Print "Поля успешно обновлены." end if
-                        else
-                           Note "Не удалось обновить поля в таблице " + TablePhotogrametry.Name + "."
-                        end if
-                     next
+                     if CopyFieldValueAndConcat(str$(groupFromInfriggementCol), str$(WorkTableOneObject), iColCountUpdate) then
+                        if Debug then Print "Поля успешно обновлены." end if
+                     else
+                        Note "Не удалось обновить поля в таблице " + TablePhotogrametry.Name + "."
+                     end if
+                  next
 
                   concotinationString = prepareInfrigement(concotinationString)
                   
@@ -447,6 +454,8 @@ Sub GetDialogElements
       isSelectionObject = false
    End If
 
+   CutByKadastr = ReadControlValue(Dialog1CBoxCutKadastr)
+
    if Debug Then
       Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
       Print "TablePhotogrametry.Name: " + TablePhotogrametry.Name
@@ -460,6 +469,7 @@ Sub GetDialogElements
       Print "TableKadastr.Name: " + TableKadastr.Name
 
       Print "Tolerance: " + str$(Tolerance)
+      Print "CutByKadastr: " + str$(CutByKadastr)
    End if
 End Sub
 
@@ -469,6 +479,7 @@ Sub SetDialogElements
 
    Alter Control CheckBoxDebug Value Debug
    ALter Control EditTextTolerance Value str$(Tolerance)
+   Alter Control Dialog1CBoxCutKadastr Value CutByKadastr
 
    ' if TablePhotogrametry.Num > 0 then
       for iTable = 1 to myTablesComboBox2_LayerCount
@@ -582,6 +593,15 @@ Sub LoadIni
       Tolerance = Val(GetIniKey)
    End If
 
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","CutByKadastr","F")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+         CutByKadastr = true
+       Else
+         CutByKadastr = false
+       End If
+   End If
+
 End Sub
 
 
@@ -615,6 +635,7 @@ Sub SaveIni
 
    SetIniKey = IniWriteString(FullINIFileName,"Параметры", "Tolerance",str$(Tolerance))
 
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","CutByKadastr",str$(CutByKadastr))
 End Sub
 
 
@@ -957,10 +978,10 @@ dim currentCol as integer
          dim vallogical as logical
          vallogical = source.COL(UpdateColumnNumber)
          Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = vallogical
-      case COL_TYPE_GRAPHIC
-         dim valObject as object
-         valObject = source.COL(UpdateColumnNumber)
-         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valObject
+      ' case COL_TYPE_GRAPHIC
+      '    dim valObject as object
+      '    valObject = source.COL(UpdateColumnNumber)
+      '    Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valObject
       case COL_TYPE_FLOAT
          dim valFloat as float
          valFloat = source.COL(UpdateColumnNumber)
@@ -973,6 +994,8 @@ dim currentCol as integer
          dim valDateTime as DateTime
          valDateTime = source.COL(UpdateColumnNumber)
          Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDateTime
+      case else
+         if Debug then Print "Встретился неизвесный тип поля: " + str$(ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_TYPE)) end if
    end case
 
    Close Table receiver
@@ -990,8 +1013,112 @@ dim currentCol as integer
 end function
 
 
-Sub Dialog1btnCutOnly_OnClick
+function CopyFieldValueAndConcat(byval sourceName as string, byval receiverName as string, byval UpdateColumnNumber as integer) as logical
+dim currentCol as integer
 
+   select * from sourceName into source noselect
+   select * from receiverName into receiver noselect
+
+   currentCol = getColNumber(receiver, ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_NAME))
+
+   OnError Goto badUpdate
+   do case ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_TYPE)
+      case COL_TYPE_CHAR
+         dim valStr as string
+         dim arrayStr(0), sumStr as string
+         dim iCount, arrayLen as integer
+         dim exists as logical
+
+         ReDim arrayStr(0)
+
+         Fetch First From source
+         Do While Not EOT(source)
+            valStr = source.COL(UpdateColumnNumber)
+
+            exists = false
+            for iCount = 1 to UBound(arrayStr)
+               if arrayStr(iCount) = valStr then
+                  exists = true
+                  exit for
+               else
+                  exists = false
+               end if
+            next
+
+            if not exists then
+               arraylen = UBound(arrayStr)
+               redim arrayStr(arrayLen + 1)
+               arrayStr(arrayLen + 1) = valStr
+               if (arrayLen + 1) > 1 then
+                  sumStr = sumStr + " " + arrayStr(arrayLen + 1)
+               else
+                  sumStr = arrayStr(arrayLen + 1)
+               end if
+            end if
+            
+            Fetch Next From source
+         Loop
+
+         valStr = sumStr
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valStr
+      case COL_TYPE_DECIMAL
+         dim valDecimal as float
+         valDecimal = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDecimal
+      case COL_TYPE_INTEGER
+         dim valInteger as integer
+         valInteger = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valInteger
+      case COL_TYPE_SMALLINT
+         dim valSmallInt as SmallInt
+         valSmallInt = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valSmallInt
+      case COL_TYPE_DATE
+         dim valDate as Date
+         valDate = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDate
+      case COL_TYPE_LOGICAL
+         dim vallogical as logical
+         vallogical = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = vallogical
+      ' case COL_TYPE_GRAPHIC
+      '    dim valObject as object
+      '    valObject = source.COL(UpdateColumnNumber)
+      '    Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valObject
+      case COL_TYPE_FLOAT
+         dim valFloat as float
+         valFloat = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valFloat
+      case COL_TYPE_TIME
+         dim valTime as Time
+         valTime = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valTime
+      case COL_TYPE_DATETIME
+         dim valDateTime as DateTime
+         valDateTime = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDateTime
+      case else
+         if Debug then Print "Встретился неизвесный тип поля: " + str$(ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_TYPE)) end if
+   end case
+
+   Close Table receiver
+   Close Table source
+
+   CopyFieldValueAndConcat = true
+
+   after_badUpdate:
+   Exit Function
+
+   badUpdate:
+      CopyFieldValueAndConcat = false
+      resume after_badUpdate
+
+end function
+
+
+Sub Dialog1btnCutOnly_OnClick
+   UpdateFields = false ' При нажатии на эту кнопку, обновлять поля таблицы не обновлять.
+   CutByKadastrOnce = true ' При нажатии ни эту кнопку обрезать по кадастру.
 End Sub
 
 
