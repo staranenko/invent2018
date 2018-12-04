@@ -67,6 +67,7 @@ Declare function CopyFieldValueAndConcat(byval sourceName as string, byval recei
 Declare Sub MainThread
 Declare function prepareInfrigement(byval str as string) as string
 Declare function ErasePhotoByKadastr(byval photoObj as object, byval kadastTable as string) as object
+Declare function checkAreaOverlap(byval table as string, byval checkObject as object) as integer
 
 Dim realyCoordSys As string
 
@@ -292,6 +293,7 @@ Sub MainThread
    dim primeObject, badObject, goodObject as object
    Dim start_time As Float
    dim concotinationString, valStr as string
+   dim checkAreaOverlaping as integer
 
    start_time = Timer( )
    
@@ -309,6 +311,13 @@ Sub MainThread
       select * from TableKadastr.Name where str$(obj) = "region" AND obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable into subselect) into selIntesectionKadastr noselect
       Close Table subselect
 
+      checkAreaOverlaping = checkAreaOverlap(str$(selIntesectionOrthophoto), primeObject)
+      if checkAreaOverlaping >= 0 then
+         select * from selIntesectionOrthophoto where rowid = checkAreaOverlaping into selIntesectionOrthophoto
+      else
+         ' Ничего не делаем, работаем с тем что выбрано
+      end if 
+
       if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) + " объектами с ортофотоплана." end if
       if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionKadastr, TAB_INFO_NROWS) + " объектами из кадастра." end if
 
@@ -317,7 +326,6 @@ Sub MainThread
       '    primeObject = ErasePhotoByKadastr(primeObject, str$(selIntesectionKadastr))
       '    Update WorkTableOneObject set obj = primeObject
       ' end if 
-      
       
       if TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) < 2 and TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) > 0 then
          for iColCountUpdate = 1 to TableInfo(selIntesectionOrthophoto, TAB_INFO_NCOLS)
@@ -366,7 +374,12 @@ Sub MainThread
                Update WorkTableOneObject set obj = badObject
 
                errorCol = getColNumber(WorkTableOneObject, InfringementCol.Name)
-               Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! " + str$(InfringementNumber) + " кад. номера."
+
+               if checkAreaOverlaping > 0 then
+                  Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! " + str$(InfringementNumber) + " кад. номера."
+               else
+                  Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! Нет пересечений."
+               end if 
             end if
 
             if EraseByKadastrOnce then
@@ -1255,4 +1268,38 @@ function ErasePhotoByKadastr(byval photoObj as object, byval kadastTable as stri
    end If
 
    Close table eraser_objects_table
+end function
+
+
+function checkAreaOverlap(byval table as string, byval checkObject as object) as integer
+' Возвращает -1 если нет только одного не нулевого пересечения, иначе возвращает номер строки
+' с единственным не нулевым пересечением
+dim iRow, notNullLen as integer
+dim notNull(0) as integer
+dim tableObj as object
+
+   Redim notNull(0)
+   iRow = 1
+   
+   select * from table into localSel noselect
+
+   Fetch First From localSel
+   Do while Not EOT(localSel)
+      tableObj = localSel.obj
+      if AreaOverlap(checkObject, tableObj) > 0  then
+         notNullLen = UBound(notNull)
+         redim notNull(notNullLen + 1)
+         notNull(notNullLen + 1) = notNullLen + 1
+      end if 
+      Fetch Next From localSel
+      iRow = iRow + 1
+   Loop
+   
+   if UBound(notNull) <> 1 then
+      checkAreaOverlap = -1
+   else
+      checkAreaOverlap = notNull(1)
+   end If
+
+   if Debug then Print "Пересечений с не нулевой площадью: " + str$(UBound(notNull)) end if
 end function
