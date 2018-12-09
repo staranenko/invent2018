@@ -26,6 +26,7 @@ Define   PopupMenu_Kadastr_KadNum   21
 Define   myTablesBox_Kadastr   22
 Define   Dialog1btnEraseOnly   23
 Define   Dialog1CBoxEraseKadastr   24
+Define   Dialog1btnTestKadNumber   25
 
 '//Dialog Dialog1 Handlers Declaration
 Declare Sub Dialog1_Execute
@@ -45,3 +46,4 @@ Declare Sub PopupMenu_Kadastr_KadNum_OnClick
 Declare Sub myTablesBox_Kadastr_OnClick
 Declare Sub Dialog1btnEraseOnly_OnClick
 Declare Sub Dialog1CBoxEraseKadastr_OnClick
+Declare Sub Dialog1btnTestKadNumber_OnClick

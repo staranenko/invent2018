@@ -68,6 +68,7 @@ Declare Sub MainThread
 Declare function prepareInfrigement(byval str as string) as string
 Declare function ErasePhotoByKadastr(byval photoObj as object, byval kadastTable as string) as object
 Declare function checkAreaOverlap(byval table as string, byval checkObject as object) as integer
+Declare function checkKadNumberFromOverlap(byval checkObject as object, byval kadNumber as string, byval kadastrTable as string, byval ColumnKadNumber as integer) as logical
 
 Dim realyCoordSys As string
 
@@ -92,10 +93,17 @@ Dim Tolerance as float
 Dim EraseByKadastr as logical
 Dim EraseByKadastrOnce as logical
 Dim UpdateFields as logical
+Dim CheckKadNumber as logical
 '/ Диалоговые элементы
 
 Dim isSelectionObject as Logical
 Dim isEqualColumn(0) as logical
+
+Type IntersectInfo
+   coincidenceKN as logical
+   areaValue as float
+   kadNum as string
+end Type
 
 
 
@@ -177,6 +185,7 @@ Dim Tables as integer
     If Debug Then Print "-------------------------------" End If
 
     EraseByKadastrOnce = false
+    CheckKadNumber = false
 
 End Sub
 
@@ -194,12 +203,12 @@ End Sub
 Sub Dialog1btnOK_OnClick
    Dim iCount, currentCol as integer
    dim selectionNameTemp as string
-   
+
    Call GetDialogElements
    Call SaveIni
 
    ' UpdateFields = true ' При нажании на текущую кнопку, всегда обновлять поля в таблице.
-   if EraseByKadastrOnce then 
+   if EraseByKadastrOnce then
       UpdateFields = false
    else
       UpdateFields = true
@@ -261,21 +270,21 @@ Sub Dialog1btnOK_OnClick
    if WindowInfo(FrontWindow(), WIN_INFO_TYPE) = WIN_MAPPER then
       Set Map Redraw Off
    End If
-   
+
    if Debug then Print "UpdateFields: " + str$(UpdateFields) + " EraseByKadastrOnce: " + str$(EraseByKadastrOnce) end if
 
    ProgressBar "Сопоставление участков..." Calling MainThread Range TableInfo(WorkTable, TAB_INFO_NROWS)
-   If CommandInfo(CMD_INFO_STATUS) Then 
-		if TableInfo(WorkTable, TAB_INFO_NROWS) > 20 then
-         Note "Сопоставление завершено! Спасибо за терпение." 
+   If CommandInfo(CMD_INFO_STATUS) Then
+                if TableInfo(WorkTable, TAB_INFO_NROWS) > 20 then
+         Note "Сопоставление завершено! Спасибо за терпение."
       end If
-	Else
-		Note "Операция прервана." 
-		dialog preserve
+        Else
+                Note "Операция прервана."
+                dialog preserve
       Goto end_sub
-	End If
+        End If
 
-  if SelectionInfo(SEL_INFO_NROWS) > 0 then 
+  if SelectionInfo(SEL_INFO_NROWS) > 0 then
      close table Selection
   end if
    end_sub:
@@ -294,9 +303,12 @@ Sub MainThread
    Dim start_time As Float
    dim concotinationString, valStr as string
    dim checkAreaOverlaping as integer
+   dim KadNumberFromWorkTable as string
+   dim coincidence as logical ' Совпадение кадастровых номеров (указаный номер есть в пересекаемых участках из кадастра)
+   dim KadNumberColInPhoto as integer
 
    start_time = Timer( )
-   
+
    iObjectInWorkTable = next_row
    Fetch Rec next_row From WorkTable
    Do While Not EOT(WorkTable) And Timer( ) - start_time < 2
@@ -304,6 +316,9 @@ Sub MainThread
 
       select * from WorkTable where rowid = iObjectInWorkTable into WorkTableOneObject noselect
       primeObject = WorkTableOneObject.obj
+
+      KadNumberColInPhoto = getColNumber(str$(WorkTableOneObject), KadNumberCol.Name)
+      KadNumberFromWorkTable = WorkTableOneObject.COL(KadNumberColInPhoto)
 
       ' select * from OrthoTable where OrthoTable.obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable) into selIntesectionOrthophoto
       select * from TableOrthophoto.Name where str$(obj) = "region" AND obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable into subselect) into selIntesectionOrthophoto
@@ -316,7 +331,7 @@ Sub MainThread
          select * from selIntesectionOrthophoto where rowid = checkAreaOverlaping into selIntesectionOrthophoto
       else
          ' Ничего не делаем, работаем с тем что выбрано
-      end if 
+      end if
 
       if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) + " объектами с ортофотоплана." end if
       if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionKadastr, TAB_INFO_NROWS) + " объектами из кадастра." end if
@@ -325,8 +340,8 @@ Sub MainThread
       ' if EraseByKadastrOnce then
       '    primeObject = ErasePhotoByKadastr(primeObject, str$(selIntesectionKadastr))
       '    Update WorkTableOneObject set obj = primeObject
-      ' end if 
-      
+      ' end if
+
       if TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) < 2 and TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) > 0 then
          for iColCountUpdate = 1 to TableInfo(selIntesectionOrthophoto, TAB_INFO_NCOLS)
             if UpdateFields then
@@ -350,7 +365,7 @@ Sub MainThread
          if EraseByKadastrOnce then
             goodObject = ErasePhotoByKadastr(goodObject, str$(selIntesectionKadastr))
             Update WorkTableOneObject set obj = goodObject
-         end if 
+         end if
       else
          ' Группировать по кадастровому номеру и если больше 1 то пометить ошибкой. Если 1 то сгруппировать по нарушению. Если 1, то из этой таблицы обновить объект от фотограмметристов.
          select * from selIntesectionOrthophoto Group By KadNumberCol.Name into groupFromKadNumberCol
@@ -379,13 +394,13 @@ Sub MainThread
                   Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! " + str$(InfringementNumber) + " кад. номера."
                else
                   Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! Нет пересечений."
-               end if 
+               end if
             end if
 
             if EraseByKadastrOnce then
                ' badObject = ErasePhotoByKadastr(badObject, str$(selIntesectionKadastr))
                Update WorkTableOneObject set obj = badObject
-            end if 
+            end if
          else
             ' Проверяем на совпадение по нарушению.
             if InfringementNumber > 0 then
@@ -403,7 +418,7 @@ Sub MainThread
                   if EraseByKadastrOnce then
                      ' badObject = ErasePhotoByKadastr(badObject, str$(selIntesectionKadastr))
                      Update WorkTableOneObject set obj = badObject
-                  end if 
+                  end if
 
                   if UpdateFields then
                      ' Alter Object badObject Info  OBJ_INFO_BRUSH, MakeBrush(107, RED, -1)
@@ -417,7 +432,7 @@ Sub MainThread
                      concotinationString = ""
                      Fetch First From groupFromInfriggementCol
                      Do While Not EOT(groupFromInfriggementCol)
-                        ' TODO: Анализировать семанику
+                        ' Анализировать семанику
                         valStr = groupFromInfriggementCol.COL(errorCol)
                         concotinationString = concotinationString + valStr
                         Fetch Next From groupFromInfriggementCol
@@ -434,7 +449,7 @@ Sub MainThread
                      next
 
                      concotinationString = prepareInfrigement(concotinationString)
-                     
+
                      errorCol = getColNumber(WorkTableOneObject, InfringementCol.Name)
                      Update WorkTableOneObject set "COL"+errorCol = concotinationString
                   end if
@@ -450,7 +465,7 @@ Sub MainThread
                   if EraseByKadastrOnce then
                      goodObject = ErasePhotoByKadastr(goodObject, str$(selIntesectionKadastr))
                      Update WorkTableOneObject set obj = goodObject
-                  end if 
+                  end if
                else
                   if TableInfo(groupFromInfriggementCol, TAB_INFO_NROWS) > 0 then
 
@@ -474,7 +489,7 @@ Sub MainThread
                      if EraseByKadastrOnce then
                         goodObject = ErasePhotoByKadastr(goodObject, str$(selIntesectionKadastr))
                         Update WorkTableOneObject set obj = goodObject
-                     end if 
+                     end if
                   end if
                end if
 
@@ -483,6 +498,31 @@ Sub MainThread
          end if
 
          close table groupFromKadNumberCol
+      end if
+
+      ' TODO: Проверяем на адекватность кадастрового номера
+      if CheckKadNumber then
+         if Debug then Print "KadNumberColInPhoto: " + str$(KadNumberColInPhoto) + ", KadNumberFromWorkTable: " + str$(KadNumberFromWorkTable) end if
+
+         coincidence = checkKadNumberFromOverlap(primeObject, KadNumberFromWorkTable, str$(selIntesectionKadastr), KadNumberColInKadastr.Num)
+         
+         if Not coincidence then
+            badObject = primeObject
+            
+            Alter Object badObject Info  OBJ_INFO_BRUSH, MakeBrush(107, BLUE, -1)
+            Alter Object badObject Info  OBJ_INFO_PEN, MakePen(5, 2, BLUE)
+            
+            Update WorkTableOneObject set obj = badObject
+         else
+            goodObject = primeObject
+            
+            Alter Object goodObject Info  OBJ_INFO_BRUSH, MakeBrush(107, GREEN, -1)
+            Alter Object goodObject Info  OBJ_INFO_PEN, MakePen(5, 2, GREEN)
+            
+            Update WorkTableOneObject set obj = goodObject
+         end if
+
+         if Debug then Print "Совпадение кадастрового номера: " + str$(coincidence) end if
       end if
 
       Fetch Next From WorkTable
@@ -495,10 +535,10 @@ Sub MainThread
    Loop
 
    If next_row > TableInfo(WorkTable, TAB_INFO_NROWS) Then
-		ProgressBar = -1 ' сообщить "Готово!" 
-	Else
-		ProgressBar = next_row ' сообщить "Запись прервана."
-	End If
+                ProgressBar = -1 ' сообщить "Готово!"
+        Else
+                ProgressBar = next_row ' сообщить "Запись прервана."
+        End If
 end sub
 
 
@@ -1133,7 +1173,7 @@ dim currentCol as integer
                   sumStr = arrayStr(arrayLen + 1)
                end if
             end if
-            
+
             Fetch Next From source
          Loop
 
@@ -1216,7 +1256,7 @@ dim exists as logical
 
    prepareInfrigement = str
    sumStr = ""
-   
+
    redim twoChars(0)
    Do While (len(str) > 0)
       twoChar = Left$(str, 2)
@@ -1237,9 +1277,9 @@ dim exists as logical
          arrayLen = UBound(twoChars)
          ReDim twoChars(arrayLen + 1)
          twoChars(arrayLen + 1) = twoChar
-         
+
          sumStr = sumStr + twoChars(arrayLen + 1)
-      end if 
+      end if
 
       str = Right$(str, len(str) - 2)
    Loop
@@ -1280,7 +1320,7 @@ dim tableObj as object
 
    Redim notNull(0)
    iRow = 1
-   
+
    select * from table into localSel noselect
 
    Fetch First From localSel
@@ -1290,11 +1330,11 @@ dim tableObj as object
          notNullLen = UBound(notNull)
          redim notNull(notNullLen + 1)
          notNull(notNullLen + 1) = notNullLen + 1
-      end if 
+      end if
       Fetch Next From localSel
       iRow = iRow + 1
    Loop
-   
+
    if UBound(notNull) <> 1 then
       checkAreaOverlap = -1
    else
@@ -1302,4 +1342,76 @@ dim tableObj as object
    end If
 
    if Debug then Print "Пересечений с не нулевой площадью: " + str$(UBound(notNull)) end if
+end function
+
+
+Sub Dialog1btnTestKadNumber_OnClick
+   UpdateFields = false ' При нажатии на эту кнопку, обновлять поля таблицы не обновлять.
+   EraseByKadastrOnce = false ' При нажатии ни эту кнопку не обрезать по кадастру.
+   CheckKadNumber = true ' При нажании на эту кнопку выполнить тестирование на адекватность кадастрового номера
+
+   call Dialog1btnOK_OnClick
+   Dialog Remove
+End Sub
+
+
+function checkKadNumberFromOverlap(byval checkObject as object, byval kadNumber as string, byval kadastrTable as string, byval ColumnKadNumber as integer) as logical
+dim iCount as integer
+dim intInfo(0) as IntersectInfo
+dim kadArea as object
+dim AreaMaxOverlap as float
+dim NumberMaxOverlap as integer
+
+   select * from kadastrTable into kadastrTable_tmp noselect
+
+   if Debug then Print "Пересечений с кадастром: " + str$(Tableinfo(kadastrTable_tmp, TAB_INFO_NROWS)) end if
+
+   Redim intInfo(Tableinfo(kadastrTable_tmp, TAB_INFO_NROWS))
+   checkKadNumberFromOverlap = false
+   iCount = 1
+
+   Fetch First From kadastrTable_tmp
+   Do While Not EOT(kadastrTable_tmp)
+      intInfo(iCount).kadNum = kadastrTable_tmp.COL(ColumnKadNumber)
+      kadArea = kadastrTable_tmp.obj
+
+      if intInfo(iCount).kadNum = kadNumber then 
+         intInfo(iCount).coincidenceKN = true
+      else
+         intInfo(iCount).coincidenceKN = false
+      end if
+
+      Set Area Units "sq m" 
+      intInfo(iCount).areaValue = AreaOverlap(checkObject, kadArea)
+
+      if Debug then Print "Кад. номер объекта: " + kadNumber + ", кад. номер в кадастре: " + intInfo(iCount).kadNum end if
+
+      iCount = iCount + 1
+      Fetch Next From kadastrTable_tmp
+   Loop
+
+   close table kadastrTable_tmp
+
+   AreaMaxOverlap = 0
+   NumberMaxOverlap = 0
+
+   if UBound(intInfo) < 1 then
+      checkKadNumberFromOverlap = false
+      exit function
+   end if 
+
+   for iCount = 1 to UBound(intInfo)
+      if Debug then Print "intInfo(" + str$(iCount) + ").coincidenceKN: " + str$(intInfo(iCount).coincidenceKN) + ", intInfo(" + str$(iCount) + ").areaValue: " + str$(intInfo(iCount).areaValue) end if
+   
+      if intInfo(iCount).areaValue >= AreaMaxOverlap then
+         AreaMaxOverlap = intInfo(iCount).areaValue
+         NumberMaxOverlap = iCount
+      end if 
+   next
+
+   if (intInfo(NumberMaxOverlap).kadNum = kadNumber) and intInfo(NumberMaxOverlap).coincidenceKN then
+      if intInfo(NumberMaxOverlap).areaValue >= Tolerance then
+         checkKadNumberFromOverlap = true
+      end if 
+   end if 
 end function
