@@ -1,8 +1,8 @@
 Include "MapBasic.def"
 Include "DialogPlotComparison.def"
 
-Include "..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
-Include "..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
+Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
+Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
 
 
 'Не редактируйте нижеследующие закомментированные строки!
@@ -107,7 +107,7 @@ end Type
 
 
 
-Sub Dialog1_OnShow
+Sub DialogPlotComparison_OnShow
 Dim Tables as integer
 
    Alter Control PopupMenu1 Disable
@@ -190,12 +190,12 @@ Dim Tables as integer
 End Sub
 
 
-Sub Dialog1_OnOKModalResult
+Sub DialogPlotComparison_OnOKModalResult
 
 End Sub
 
 
-Sub Dialog1_OnCancelModalResult
+Sub DialogPlotComparison_OnCancelModalResult
 
 End Sub
 

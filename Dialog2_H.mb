@@ -1,0 +1,25 @@
+Include "DialogNearAreas.def"
+
+'Не редактируйте нижеследующие закомментированные строки!
+'//{$DLG_HANDLERS DialogNearAreas.mb}
+
+
+Sub NearAreas_OnShow
+
+End Sub
+
+Sub NearAreas_OnOKModalResult
+
+End Sub
+
+Sub NearAreas_OnCancelModalResult
+
+End Sub
+
+Sub Dialog2btnOK_OnClick
+
+End Sub
+
+Sub Dialog2btnCancel_OnClick
+
+End Sub

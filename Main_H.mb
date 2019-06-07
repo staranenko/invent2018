@@ -1,4 +1,5 @@
-Include "Dialog1.def"
+Include "DialogNearAreas.def"
+Include "DialogPlotComparison.def"
 Include "DialogAbout.def"
 Include "Main.def"
 '////////////////////////////////////////
@@ -25,9 +26,13 @@ Sub menuExit_OnClick
 End Sub
 
 Sub MenuItemMatchingPlot_OnClick
-    Call Dialog1_Execute
+    Call DialogPlotComparison_Execute
 End Sub
 
 Sub MenuItemAbout_OnClick
     Call DialogAbout_Execute
+End Sub
+
+Sub MenuItemNearAreas_OnClick
+    Call DialogNearAreas_Execute
 End Sub

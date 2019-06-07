@@ -1,0 +1,21 @@
+Dialog
+ Title "Удаленность участков"
+ Width 400 Height 350
+ Position 435, 224
+ Calling DialogNearAreas_OnShow
+CenterDisplay
+'//{$Controls}
+   Control OKButton
+     ID Dialog2btnOK
+     Title "OK"
+     Position 304, 5
+     Width 75 Height 25
+     Calling Dialog2btnOK_OnClick
+'//{$Control End}
+   Control CancelButton
+     ID Dialog2btnCancel
+     Title "Отмена"
+     Position 304, 35
+     Width 75 Height 25
+     Calling Dialog2btnCancel_OnClick
+'//{$Control End}

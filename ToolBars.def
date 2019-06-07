@@ -6,7 +6,8 @@
 '////////////////////////////////////////
 Define	ToolBarInvent2018	1000	
 Define	PashButtonMatchingPlot	1001	
-Define	ToolBtnExit	1002	
+Define	PushBtnNearAreas	1002	
+Define	ToolBtnExit	1003	
 
 '//Handlers Declaration
 Declare Sub CreateToolBars
@@ -14,4 +15,5 @@ Declare Sub BeforeToolBarsCreate
 Declare Sub AfterToolBarsCreate
 '//Buttons Handlers Declaration
 Declare Sub PashButtonMatchingPlot_OnClick
+Declare Sub PushBtnNearAreas_OnClick
 Declare Sub ToolBtnExit_OnClick

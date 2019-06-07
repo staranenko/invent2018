@@ -1,4 +1,5 @@
-Include "Dialog1.def"
+Include "DialogNearAreas.def"
+Include "DialogPlotComparison.def"
 Include "ToolBars.def"
 '////////////////////////////////////////
 '//{$TOOLBARS HANDLERS ToolBars.mb}
@@ -24,5 +25,9 @@ Sub ToolBtnExit_OnClick
 End Sub
 
 Sub PashButtonMatchingPlot_OnClick
-    Call Dialog1_Execute
+    Call DialogPlotComparison_Execute
+End Sub
+
+Sub PushBtnNearAreas_OnClick
+    Call  DialogNearAreas_Execute
 End Sub

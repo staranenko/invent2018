@@ -1,0 +1,16 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG_CTRLS&SUBS_DEF}
+
+'//Dialog Controls IDs
+Define   Dialog2btnOK   1
+Define   Dialog2btnCancel   2
+
+'//Dialog NearAreas Handlers Declaration
+Declare Sub NearAreas_Execute
+Declare Sub NearAreas_OnShow
+Declare Sub NearAreas_OnOKModalResult
+Declare Sub NearAreas_OnCancelModalResult
+
+'//Controls Handlers Declaration
+Declare Sub Dialog2btnOK_OnClick
+Declare Sub Dialog2btnCancel_OnClick

@@ -1,0 +1,33 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG NearAreas}
+Include "MapBasic.def"
+Include "Dialog2.def"
+Sub NearAreas_Execute
+
+Dialog
+ Title "Удаленность участков"
+ Width 256 Height 191
+ Calling NearAreas_OnShow
+'//{$Controls}
+   Control OKButton
+     ID Dialog2btnOK
+     Title "OK"
+     Position 203, 3
+     Width 50 Height 15
+     Calling Dialog2btnOK_OnClick
+'//{$Control End}
+   Control CancelButton
+     ID Dialog2btnCancel
+     Title "Отмена"
+     Position 203, 22
+     Width 50 Height 15
+     Calling Dialog2btnCancel_OnClick
+'//{$Control End}
+
+If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
+   call NearAreas_OnOKModalResult
+Else 
+   call NearAreas_OnCancelModalResult
+End If
+
+End Sub
