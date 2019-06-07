@@ -2,8 +2,25 @@
 '//{$DLG_CTRLS&SUBS_DEF}
 
 '//Dialog Controls IDs
-Define   Dialog2btnOK   1
-Define   Dialog2btnCancel   2
+Define   DNA_btnOK   1
+Define   DNA_btnCancel   2
+Define   DNA_GroupBox1   3
+Define   DNA_GroupBox2   4
+Define   DNA_SourceTableList   5
+Define   DNA_ResultTableList   6
+Define   DNA_SourceTableFieldsList   7
+Define   DNA_ResultTableFieldsList   8
+Define   DNA_StaticText1   9
+Define   DNA_StaticText2   10
+Define   DNA_UnitsDistance   11
+Define   DNA_StaticText3   12
+Define   DNA_TypeAngle   13
+Define   DNA_StaticText4   14
+Define   DNA_StaticText5   15
+Define   DNA_StaticText6   16
+Define   DNA_StaticText7   17
+Define   DNA_FieldNameDistance   18
+Define   DNA_FieldNameAngle   19
 
 '//Dialog DialogNearAreas Handlers Declaration
 Declare Sub DialogNearAreas_Execute
@@ -12,5 +29,11 @@ Declare Sub DialogNearAreas_OnOKModalResult
 Declare Sub DialogNearAreas_OnCancelModalResult
 
 '//Controls Handlers Declaration
-Declare Sub Dialog2btnOK_OnClick
-Declare Sub Dialog2btnCancel_OnClick
+Declare Sub DNA_btnOK_OnClick
+Declare Sub DNA_btnCancel_OnClick
+Declare Sub DNA_SourceTableList_OnClick
+Declare Sub DNA_ResultTableList_OnClick
+Declare Sub DNA_SourceTableFieldsList_OnClick
+Declare Sub DNA_ResultTableFieldsList_OnClick
+Declare Sub DNA_UnitsDistance_OnClick
+Declare Sub DNA_TypeAngle_OnClick

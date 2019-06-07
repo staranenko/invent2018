@@ -1,10 +1,70 @@
+Include "MapBasic.def"
 Include "DialogNearAreas.def"
+
+'Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
+'Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
 
 'Не редактируйте нижеследующие закомментированные строки!
 '//{$DLG_HANDLERS DialogNearAreas.mb}
 
+'//{$BEGIN GLOBALS FOR CONTROL DNA_ResultTableList}
+Global DNA_ResultTableList_sTableName As String
+Global DNA_ResultTableList_sTablePath As String
+Global DNA_ResultTableList_saLayers() As String
+Global DNA_ResultTableList_WinID As Integer
+Global DNA_ResultTableList_CurrTable As String
+Global DNA_ResultTableList_LayerCount As Integer
+Global DNA_ResultTableList_I As Integer
+'//{$END GLOBALS FOR CONTROL DNA_ResultTableList}
+
+'//{$BEGIN GLOBALS FOR CONTROL DNA_SourceTableList}
+Global DNA_SourceTableList_sTableName As String
+Global DNA_SourceTableList_sTablePath As String
+Global DNA_SourceTableList_saLayers() As String
+Global DNA_SourceTableList_WinID As Integer
+Global DNA_SourceTableList_CurrTable As String
+Global DNA_SourceTableList_LayerCount As Integer
+Global DNA_SourceTableList_I As Integer
+'//{$END GLOBALS FOR CONTROL DNA_SourceTableList}
+
 
 Sub DialogNearAreas_OnShow
+
+'//{$BEGIN INIT CODE FOR CONTROL DNA_ResultTableList}
+   ReDim DNA_ResultTableList_saLayers(0)
+   DNA_ResultTableList_WinID = FrontWindow()
+   If DNA_ResultTableList_WinID Then
+      DNA_ResultTableList_LayerCount = NumTables()
+   Else
+      DNA_ResultTableList_LayerCount = 0
+      Alter Control DNA_ResultTableList Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( DNA_ResultTableList_LayerCount <> 0) Then
+      ReDim DNA_ResultTableList_saLayers(DNA_ResultTableList_LayerCount)
+      For DNA_ResultTableList_i = 1 to DNA_ResultTableList_LayerCount
+         DNA_ResultTableList_saLayers(DNA_ResultTableList_i) = TableInfo(DNA_ResultTableList_i, TAB_INFO_NAME)
+      Next
+      Alter Control DNA_ResultTableList Title From Variable DNA_ResultTableList_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL DNA_ResultTableList}
+
+'//{$BEGIN INIT CODE FOR CONTROL DNA_SourceTableList}
+   ReDim DNA_SourceTableList_saLayers(0)
+   DNA_SourceTableList_WinID = FrontWindow()
+   If DNA_SourceTableList_WinID Then
+      DNA_SourceTableList_LayerCount = NumTables()
+   Else
+      DNA_SourceTableList_LayerCount = 0
+      Alter Control DNA_SourceTableList Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( DNA_SourceTableList_LayerCount <> 0) Then
+      ReDim DNA_SourceTableList_saLayers(DNA_SourceTableList_LayerCount)
+      For DNA_SourceTableList_i = 1 to DNA_SourceTableList_LayerCount
+         DNA_SourceTableList_saLayers(DNA_SourceTableList_i) = TableInfo(DNA_SourceTableList_i, TAB_INFO_NAME)
+      Next
+      Alter Control DNA_SourceTableList Title From Variable DNA_SourceTableList_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL DNA_SourceTableList}
 
 End Sub
 
@@ -16,10 +76,40 @@ Sub DialogNearAreas_OnCancelModalResult
 
 End Sub
 
-Sub Dialog2btnOK_OnClick
+Sub DNA_btnOK_OnClick
 
 End Sub
 
-Sub Dialog2btnCancel_OnClick
+Sub DNA_btnCancel_OnClick
+
+End Sub
+
+Sub DNA_SourceTableList_OnClick
+   If UBound(DNA_SourceTableList_saLayers) > 0 Then
+      DNA_SourceTableList_sTableName = DNA_SourceTableList_saLayers(ReadControlValue(DNA_SourceTableList))
+      'print "DNA_SourceTableList_sTableName ="+DNA_SourceTableList_sTableName
+   End If
+End Sub
+
+Sub DNA_ResultTableList_OnClick
+   If UBound(DNA_ResultTableList_saLayers) > 0 Then
+      DNA_ResultTableList_sTableName = DNA_ResultTableList_saLayers(ReadControlValue(DNA_ResultTableList))
+      'print "DNA_ResultTableList_sTableName ="+DNA_ResultTableList_sTableName
+   End If
+End Sub
+
+Sub DNA_SourceTableFieldsList_OnClick
+
+End Sub
+
+Sub DNA_ResultTableFieldsList_OnClick
+
+End Sub
+
+Sub DNA_UnitsDistance_OnClick
+
+End Sub
+
+Sub DNA_TypeAngle_OnClick
 
 End Sub

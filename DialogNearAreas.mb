@@ -6,22 +6,136 @@ Sub DialogNearAreas_Execute
 
 Dialog
  Title "Удаленность участков"
- Width 256 Height 191
+ Width 309 Height 276
  Calling DialogNearAreas_OnShow
 '//{$Controls}
    Control OKButton
-     ID Dialog2btnOK
+     ID DNA_btnOK
      Title "OK"
-     Position 203, 3
+     Position 181, 254
      Width 50 Height 15
-     Calling Dialog2btnOK_OnClick
+     Calling DNA_btnOK_OnClick
 '//{$Control End}
    Control CancelButton
-     ID Dialog2btnCancel
+     ID DNA_btnCancel
      Title "Отмена"
-     Position 203, 22
+     Position 242, 254
      Width 50 Height 15
-     Calling Dialog2btnCancel_OnClick
+     Calling DNA_btnCancel_OnClick
+'//{$Control End}
+   Control GroupBox
+     Position 11, 5
+     Width 223 Height 65
+     ID DNA_GroupBox1
+     Title "DNA_GroupBox1"
+'//{$Control End}
+   Control GroupBox
+     Position 11, 74
+     Width 224 Height 103
+     ID DNA_GroupBox2
+     Title "DNA_GroupBox2"
+'//{$Control End}
+   Control PopupMenu
+     ID DNA_SourceTableList
+     Title ""
+     Position 74, 19
+     Width 97 Height 13
+     Value 0
+     Calling DNA_SourceTableList_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID DNA_ResultTableList
+     Title ""
+     Position 68, 88
+     Width 97 Height 13
+     Value 0
+     Calling DNA_ResultTableList_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID DNA_SourceTableFieldsList
+     Title ""
+     Position 93, 39
+     Width 97 Height 13
+     Value 0
+     Calling DNA_SourceTableFieldsList_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID DNA_ResultTableFieldsList
+     Title ""
+     Position 87, 108
+     Width 97 Height 13
+     Value 0
+     Calling DNA_ResultTableFieldsList_OnClick
+'//{$Control End}
+   Control StaticText
+     ID DNA_StaticText1
+     Title "___________________________________________________________________________________________________"
+     Position 7, 239
+     Width 237 Height 8
+'//{$Control End}
+   Control StaticText
+     ID DNA_StaticText2
+     Title "DNA_StaticText2"
+     Position 20, 139
+     Width 36 Height 8
+'//{$Control End}
+   Control PopupMenu
+     ID DNA_UnitsDistance
+     Title ""
+     Position 161, 137
+     Width 64 Height 13
+     Value 0
+     Calling DNA_UnitsDistance_OnClick
+'//{$Control End}
+   Control StaticText
+     ID DNA_StaticText3
+     Title "DNA_StaticText3"
+     Position 21, 159
+     Width 36 Height 8
+'//{$Control End}
+   Control PopupMenu
+     ID DNA_TypeAngle
+     Title ""
+     Position 160, 156
+     Width 65 Height 13
+     Value 0
+     Calling DNA_TypeAngle_OnClick
+'//{$Control End}
+   Control StaticText
+     ID DNA_StaticText4
+     Title "DNA_StaticText4"
+     Position 21, 20
+     Width 36 Height 8
+'//{$Control End}
+   Control StaticText
+     ID DNA_StaticText5
+     Title "DNA_StaticText5"
+     Position 21, 39
+     Width 36 Height 8
+'//{$Control End}
+   Control StaticText
+     ID DNA_StaticText6
+     Title "DNA_StaticText6"
+     Position 16, 89
+     Width 36 Height 8
+'//{$Control End}
+   Control StaticText
+     ID DNA_StaticText7
+     Title "DNA_StaticText7"
+     Position 18, 113
+     Width 36 Height 8
+'//{$Control End}
+   Control EditText
+     ID DNA_FieldNameDistance
+     Value "DNA_E"
+     Position 83, 138
+     Width 69 Height 13
+'//{$Control End}
+   Control EditText
+     ID DNA_FieldNameAngle
+     Value "DNA_FieldNameAngle"
+     Position 82, 156
+     Width 73 Height 13
 '//{$Control End}
 
 If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
