@@ -3,6 +3,7 @@ Include "DialogNearAreas.def"
 
 'Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
 'Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
+Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\GeoFunction.def"
 
 'Не редактируйте нижеследующие закомментированные строки!
 '//{$DLG_HANDLERS DialogNearAreas.mb}
@@ -26,6 +27,29 @@ Global DNA_SourceTableList_CurrTable As String
 Global DNA_SourceTableList_LayerCount As Integer
 Global DNA_SourceTableList_I As Integer
 '//{$END GLOBALS FOR CONTROL DNA_SourceTableList}
+
+Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
+Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
+
+Declare Sub LoadIniNear
+Declare Sub SaveIniNear
+Declare Sub GetDialogElementsNear
+Declare Sub SetDialogElementsNear
+
+Declare Sub SelectTableNear(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+Declare function getColNumberNear(byval table as string, byval colName as string) as integer
+
+Declare function SelectProjectionNear(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
+Declare Sub GetAndSetCoordSysNear(byval TableName as string, byval setType as string)
+Declare Function WhatSystemOfCoordinatesNear(byval TablesName as string) as string
+Declare Function WhatSystemOfCoordinatesWindowNear(byval WindowName as integer) as string
+
+Global Debug As logical
+
+Dim realyCoordSys As string
+
+Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
+Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
 
 
 Sub DialogNearAreas_OnShow
@@ -66,50 +90,400 @@ Sub DialogNearAreas_OnShow
    End If
 '//{$END INIT CODE FOR CONTROL DNA_SourceTableList}
 
+   Call SetDialogElementsNear
+
+   Call DNA_SourceTableList_OnClick
+   Call DNA_ResultTableList_OnClick
+
 End Sub
+
 
 Sub DialogNearAreas_OnOKModalResult
 
 End Sub
 
+
 Sub DialogNearAreas_OnCancelModalResult
 
 End Sub
 
-Sub DNA_btnOK_OnClick
 
+Sub DNA_btnOK_OnClick
+   Call GetDialogElementsNear
 End Sub
+
 
 Sub DNA_btnCancel_OnClick
 
 End Sub
 
+
 Sub DNA_SourceTableList_OnClick
    If UBound(DNA_SourceTableList_saLayers) > 0 Then
       DNA_SourceTableList_sTableName = DNA_SourceTableList_saLayers(ReadControlValue(DNA_SourceTableList))
       'print "DNA_SourceTableList_sTableName ="+DNA_SourceTableList_sTableName
+      Call SelectTableNear(DNA_SourceTableList_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
+      Alter Control DNA_SourceTableFieldsList Title From Variable FullColumnsInfo_1
+      Alter Control DNA_SourceTableFieldsList Enable
    End If
 End Sub
+
 
 Sub DNA_ResultTableList_OnClick
    If UBound(DNA_ResultTableList_saLayers) > 0 Then
       DNA_ResultTableList_sTableName = DNA_ResultTableList_saLayers(ReadControlValue(DNA_ResultTableList))
       'print "DNA_ResultTableList_sTableName ="+DNA_ResultTableList_sTableName
+      Call SelectTableNear(DNA_ResultTableList_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
+      Alter Control DNA_ResultTableFieldsList Title From Variable FullColumnsInfo_2
+      Alter Control DNA_ResultTableFieldsList Enable
    End If
 End Sub
+
 
 Sub DNA_SourceTableFieldsList_OnClick
 
 End Sub
 
+
 Sub DNA_ResultTableFieldsList_OnClick
 
 End Sub
+
 
 Sub DNA_UnitsDistance_OnClick
 
 End Sub
 
+
 Sub DNA_TypeAngle_OnClick
 
 End Sub
+
+
+Sub SelectTableNear(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+     Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
+     Dim SpaceString As String
+         ReDim FullColumnsInfo(0)
+         ReDim TableColumns(0)
+         ReDim TypeColumns(0)
+         For i_counter = 1 to NumCols(TableName)
+             ReDim TableColumns(UBound(TableColumns)+1)
+             ReDim TypeColumns(UBound(TypeColumns)+1)
+             TableColumns(i_counter) = ColumnInfo(TableName,"COL"+i_counter,COL_INFO_NAME)
+             Do Case  ColumnInfo(TableName,"COL"+i_counter,COL_INFO_TYPE)
+                      Case COL_TYPE_CHAR
+                           TypeColumns(i_counter) = "Символьный"
+                      Case COL_TYPE_DECIMAL
+                           TypeColumns(i_counter) = "Десятичный"
+                      Case COL_TYPE_FLOAT
+                           TypeColumns(i_counter) = "Вещественный"
+                      Case COL_TYPE_INTEGER
+                           TypeColumns(i_counter) = "Целочисленный (4 байт)"
+                      Case COL_TYPE_SMALLINT
+                           TypeColumns(i_counter) = "Короткое целое число (2 байт)"
+                      Case COL_TYPE_DATE
+                           TypeColumns(i_counter) = "Дата"
+                      Case COL_TYPE_LOGICAL
+                           TypeColumns(i_counter) = "Логический"
+                      Case COL_TYPE_GRAPHIC
+                           TypeColumns(i_counter) = "Специальный тип колонки (Obj)"
+                      Case Else
+                           Note "Ошибка чтения таблицы " + TableName
+                           Exit Sub
+             End Case
+         Next
+         For i_counter = 1 to NumCols(TableName) - 1
+             i_MaxLen = Maximum(Len(TableColumns(i_counter)),Len(TableColumns(i_counter + 1)))
+             MaxLen = Maximum(MaxLen,i_MaxLen)
+         Next
+         For i_counter = 1 to NumCols(TableName)
+             ReDim FullColumnsInfo(UBound(FullColumnsInfo)+1)
+             SpaceString = ""
+             For j_counter = 1 to Fix((MaxLen - Len(TableColumns(i_counter)))*1.8)
+                 SpaceString = SpaceString + " "
+             Next
+             FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
+         Next
+End Sub
+
+
+function getColNumberNear(byval table as string, byval colName as string) as integer
+dim iCol as integer
+
+   for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
+      if UCase$(colName) = UCase$(ColumnInfo(table, "COL"+iCol, COL_INFO_NAME)) then
+         getColNumberNear = iCol
+         Exit function
+      end if
+   next
+
+end function
+
+
+Sub GetDialogElementsNear
+   ' Debug = ReadControlValue(CheckBoxDebug)
+
+   ' TablePhotogrametry.Num = ReadControlValue(myTablesComboBox2)
+   ' TablePhotogrametry.Name = myTablesComboBox2_saLayers(TablePhotogrametry.Num)
+   ' TableOrthophoto.Num = ReadControlValue(myTablesComboBox1)
+   ' TableOrthophoto.Name = myTablesComboBox1_saLayers(TableOrthophoto.Num)
+   ' TableKadastr.Num = ReadControlValue(myTablesBox_Kadastr)
+   ' TableKadastr.Name = myTablesBox_Kadastr_saLayers(TableKadastr.Num)
+
+   ' KadNumberCol.Num = ReadControlValue(PopupMenu1)
+   ' KadNumberCol.Name = TableColumns_1(KadNumberCol.Num)
+   ' InfringementCol.Num = ReadControlValue(PopupMenu2)
+   ' InfringementCol.Name = TableColumns_1(InfringementCol.Num)
+   ' KadNumberColInKadastr.Num = ReadControlValue(PopupMenu_Kadastr_KadNum)
+   ' KadNumberColInKadastr.Name = TableColumns_2(KadNumberColInKadastr.Num)
+
+   ' Tolerance = val(ReadControlValue(EditTextTolerance))
+
+   ' if (TablePhotogrametry.Num > 0  and Not TableIsOpen(TablePhotogrametry.Name)) then
+   '    isSelectionObject = true
+   ' else
+   '    isSelectionObject = false
+   ' End If
+
+   ' EraseByKadastr = ReadControlValue(Dialog1CBoxEraseKadastr)
+
+   ' if Debug Then
+   '    Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
+   '    Print "TablePhotogrametry.Name: " + TablePhotogrametry.Name
+   '    Print "TableOrthophoto.Num: " + str$(TableOrthophoto.Num)
+   '    Print "TableOrthophoto.Name: " + TableOrthophoto.Name
+   '    Print "KadNumberCol.Num: " + str$(KadNumberCol.Num)
+   '    Print "KadNumberCol.Name: " + KadNumberCol.Name
+   '    Print "InfringementCol.Num: " + str$(InfringementCol.Num)
+   '    Print "InfringementCol.Name: " + InfringementCol.Name
+   '    Print "TableKadastr.Num: " + str$(TableKadastr.Num)
+   '    Print "TableKadastr.Name: " + TableKadastr.Name
+
+   '    Print "Tolerance: " + str$(Tolerance)
+   '    Print "EraseByKadastr: " + str$(EraseByKadastr)
+   ' End if
+End Sub
+
+
+Sub SetDialogElementsNear
+   Dim iTable, ColNum as integer
+
+   ' Alter Control CheckBoxDebug Value Debug
+   ' ALter Control EditTextTolerance Value str$(Tolerance)
+   ' Alter Control Dialog1CBoxEraseKadastr Value EraseByKadastr
+
+   ' ' if TablePhotogrametry.Num > 0 then
+   '    for iTable = 1 to myTablesComboBox2_LayerCount
+   '       if myTablesComboBox2_saLayers(iTable) = TablePhotogrametry.Name then
+   '          Alter Control myTablesComboBox2 Value iTable
+   '       end if
+   '    Next
+   ' ' end If
+
+   ' ' if TableOrthophoto.Num > 0 then
+   '    for iTable = 1 to myTablesComboBox1_LayerCount
+   '       if myTablesComboBox1_saLayers(iTable) = TableOrthophoto.Name then
+   '          Alter Control myTablesComboBox1 Value iTable
+   '          Call myTablesComboBox1_OnClick
+
+   '          Alter Control PopupMenu1 Value ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1)
+
+   '          Alter Control PopupMenu2 Value ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1)
+
+   '       end if
+   '    next
+   ' ' end If
+
+   ' ' if TableKadastr.Num > 0 then
+   '    for iTable = 1 to myTablesBox_Kadastr_LayerCount
+   '       if myTablesBox_Kadastr_saLayers(iTable) = TableKadastr.Name then
+   '          ALter Control myTablesBox_Kadastr Value iTable
+   '          call myTablesBox_Kadastr_OnClick
+
+   '          Alter Control PopupMenu_Kadastr_KadNum Value ColNumber(KadNumberColInKadastr.Num, KadNumberColInKadastr.Name, TableColumns_2)
+
+   '       end if
+   '    next
+   ' ' end if
+End Sub
+
+
+Sub LoadIniNear
+   Dim PachApplicationMBX, FullINIFileName As String
+   Dim FormName, KeyString, ValueString As String
+   Dim GetIniKey As String
+
+   PachApplicationMBX = ApplicationDirectory$()
+   FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
+   ' if GetIniKey <> "" Then
+   '     If GetIniKey = "T" Then
+   '        Debug = true
+   '     Else
+   '        Debug = false
+   '     End If
+   ' End If
+
+   ' GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Num","0")
+   ' if GetIniKey <> "" Then
+   '    TablePhotogrametry.Num = Val(GetIniKey)
+   ' End If
+   ' GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Name","")
+   ' if GetIniKey <> "" Then
+   '    TablePhotogrametry.Name = GetIniKey
+   ' End If
+
+   ' GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Num","0")
+   ' if GetIniKey <> "" Then
+   '    TableOrthophoto.Num = Val(GetIniKey)
+   ' End If
+   ' GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Name","")
+   ' if GetIniKey <> "" Then
+   '    TableOrthophoto.Name = GetIniKey
+   ' End If
+
+   ' GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Num","0")
+   ' if GetIniKey <> "" Then
+   '    TableKadastr.Num = Val(GetIniKey)
+   ' End If
+   ' GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Name","")
+   ' if GetIniKey <> "" Then
+   '    TableKadastr.Name = GetIniKey
+   ' end if
+
+   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Num","0")
+   ' if GetIniKey <> "" Then
+   '    KadNumberCol.Num = Val(GetIniKey)
+   ' End If
+   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Name","")
+   ' if GetIniKey <> "" Then
+   '    KadNumberCol.Name = GetIniKey
+   ' end if
+
+   ' GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Num","0")
+   ' if GetIniKey <> "" Then
+   '    InfringementCol.Num = Val(GetIniKey)
+   ' End If
+   ' GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Name","")
+   ' if GetIniKey <> "" Then
+   '    InfringementCol.Name = GetIniKey
+   ' End If
+
+   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Num","0")
+   ' if GetIniKey <> "" Then
+   '    KadNumberColInKadastr.Num = Val(GetIniKey)
+   ' End If
+   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Name","")
+   ' if GetIniKey <> "" Then
+   '    KadNumberColInKadastr.Name = GetIniKey
+   ' End If
+
+   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","Tolerance","0")
+   ' if GetIniKey <> "" Then
+   '    Tolerance = Val(GetIniKey)
+   ' End If
+
+   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","EraseByKadastr","F")
+   ' if GetIniKey <> "" Then
+   '     If GetIniKey = "T" Then
+   '       EraseByKadastr = true
+   '     Else
+   '       EraseByKadastr = false
+   '     End If
+   ' End If
+
+End Sub
+
+
+Sub SaveIniNear
+    Dim PachApplicationMBX, FullINIFileName As String
+    Dim FormName, KeyString, ValueString As String
+    Dim SetIniKey As String
+
+    PachApplicationMBX = ApplicationDirectory$()
+    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Num",str$(TablePhotogrametry.Num))
+   ' SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Name",str$(TablePhotogrametry.Name))
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Num",str$(TableOrthophoto.Num))
+   ' SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Name",str$(TableOrthophoto.Name))
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Num",str$(TableKadastr.Num))
+   ' SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Name",str$(TableKadastr.Name))
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Num",str$(KadNumberCol.Num))
+   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Name",str$(KadNumberCol.Name))
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Num",str$(InfringementCol.Num))
+   ' SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Name",str$(InfringementCol.Name))
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Num",str$(KadNumberColInKadastr.Num))
+   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Name",str$(KadNumberColInKadastr.Name))
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры", "Tolerance",str$(Tolerance))
+
+   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры","EraseByKadastr",str$(EraseByKadastr))
+End Sub
+
+
+Sub GetAndSetCoordSysNear(byval TableName as string, byval setType as string)
+    If tableinfo(TableName, TAB_INFO_MAPPABLE) = false Then
+       'Note "Таблица '" + TableName + "' не содержит графических объектов. Обработка остановлена."
+       Exit Sub
+    End If
+    realyCoordSys = SelectProjectionNear(setType, TableName, FrontWindow())
+    'Note realyCoordSys
+    If realyCoordSys <> "Ошибка" Then
+       'Note "Результат: "  + realyCoordSys
+       run command "Set CoordSys " + realyCoordSys
+    Else
+       'Note "ошибка определения системы координат..."
+    end If
+    'Print realyCoordSys
+End Sub
+
+
+function SelectProjectionNear(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
+   Dim realyTableName As string
+   Do Case Metod
+      Case "Объект"
+           If tableinfo(TableName, TAB_INFO_TEMP) Then
+              realyTableName = selectioninfo(SEL_INFO_TABLENAME)
+           Else
+               realyTableName = TableName
+           End If
+           realyCoordSys = WhatSystemOfCoordinatesNear(realyTableName)
+      Case "Окно"
+           realyCoordSys = WhatSystemOfCoordinatesWindowNear(WinowsNumber)
+      Case "Выбор"
+
+      Case Else
+
+   End Case
+   SelectProjectionNear = realyCoordSys
+End Function
+
+
+Function WhatSystemOfCoordinatesNear (byval TablesName as string) as string
+'		   Note tableinfo(TablesName, 3) 'TAB_INFO_TYPE = 3
+			'Note TablesName
+         If tableinfo(TablesName, 7) then  ' TAB_INFO_TEMP = 7
+            TablesName = tableinfo(TablesName, 12) ' TAB_INFO_MAPPABLE_TABLE = 12
+         end if
+         WhatSystemOfCoordinatesNear =  mid$(TableInfo(TablesName,29),len("CoordSys") + 2,len(TableInfo(TablesName,29))-len("CoordSys")) 'TAB_INFO_COORDSYS_NAME=30, TAB_INFO_COORDSYS_CLAUSE=29
+End Function
+
+Function WhatSystemOfCoordinatesWindowNear (byval WindowName as integer) as string
+         'Note WindowName
+         'Note MapperInfo(WindowName,22)
+         If WindowInfo(WindowName, 3) = 1 then  'WIN_INFO_TYPE=3, WIN_MAPPER=1
+            WhatSystemOfCoordinatesWindowNear =  mid$(MapperInfo(WindowName,22),len("CoordSys") + 2,len(MapperInfo(WindowName,22))-len("CoordSys")) 'TAB_INFO_COORDSYS_NAME=30, MAPPER_INFO_COORDSYS_CLAUSE_WITH_BOUNDS=22
+         else
+            WhatSystemOfCoordinatesWindowNear = "Ошибка"
+            Note "Для определения системы координат окна карты, требуется ОКНО КАРТЫ!"
+         end If
+End Function
