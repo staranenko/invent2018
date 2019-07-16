@@ -1,3 +1,4 @@
+Include "DialogFillUpks.def"
 Include "DialogNearAreas.def"
 Include "DialogPlotComparison.def"
 Include "ToolBars.def"
@@ -30,4 +31,8 @@ End Sub
 
 Sub PushBtnNearAreas_OnClick
     Call  DialogNearAreas_Execute
+End Sub
+
+Sub PushBtnFillUpks_OnClick
+    Call DialogFillUpks_Execute
 End Sub

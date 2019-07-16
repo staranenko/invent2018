@@ -2,11 +2,13 @@
 Application=Release\Invent2018.mbx
 Module=DialogAbout.mb
 Module=DialogAbout_H.mbo
+Module=DialogFillUpks.MBO
 Module=DialogNearAreas.MBO
 Module=DialogNearAreas_H.MBO
 Module=DialogPlotComparison.MBO
+Module=DialogPlotComparison_H.MBO
 Module=Main.mbo
 Module=Main_H.mbo
 Module=ToolBars.mbo
 Module=ToolBars_H.mbo
-Module=DialogPlotComparison_H.MBO
+Module=DialogFillUpks_H.MBO

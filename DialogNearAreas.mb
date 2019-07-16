@@ -5,7 +5,7 @@ Include "DialogNearAreas.def"
 Sub DialogNearAreas_Execute
 
 Dialog
- Title "Удаленность участков"
+ Title "Удаленность участков - v0.1"
  Width 271 Height 207
  Calling DialogNearAreas_OnShow
 '//{$Controls}

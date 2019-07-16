@@ -4,46 +4,13 @@
 '//Dialog Controls IDs
 Define   Dialog1btnOK   1
 Define   Dialog1btnCancel   2
-Define   StaticText1   3
-Define   myTablesComboBox1   4
-Define   myTablesComboBox2   5
-Define   PopupMenu1   6
-Define   PopupMenu2   7
-Define   EditTextTolerance   8
-Define   StaticText2   9
-Define   StaticText3   10
-Define   StaticText4   11
-Define   StaticText5   12
-Define   StaticText6   13
-Define   CheckBoxDebug   14
-Define   GroupBox1   15
-Define   GroupBox2   16
-Define   StaticText7   17
-Define   GroupBox3   18
-Define   StaticText9   19
-Define   StaticText10   20
-Define   PopupMenu_Kadastr_KadNum   21
-Define   myTablesBox_Kadastr   22
-Define   Dialog1btnEraseOnly   23
-Define   Dialog1CBoxEraseKadastr   24
-Define   Dialog1btnTestKadNumber   25
 
-'//Dialog Dialog1 Handlers Declaration
-Declare Sub Dialog1_Execute
-Declare Sub Dialog1_OnShow
-Declare Sub Dialog1_OnOKModalResult
-Declare Sub Dialog1_OnCancelModalResult
+'//Dialog DialogFillUpks Handlers Declaration
+Declare Sub DialogFillUpks_Execute
+Declare Sub DialogFillUpks_OnShow
+Declare Sub DialogFillUpks_OnOKModalResult
+Declare Sub DialogFillUpks_OnCancelModalResult
 
 '//Controls Handlers Declaration
 Declare Sub Dialog1btnOK_OnClick
 Declare Sub Dialog1btnCancel_OnClick
-Declare Sub myTablesComboBox1_OnClick
-Declare Sub myTablesComboBox2_OnClick
-Declare Sub PopupMenu1_OnClick
-Declare Sub PopupMenu2_OnClick
-Declare Sub CheckBoxDebug_OnClick
-Declare Sub PopupMenu_Kadastr_KadNum_OnClick
-Declare Sub myTablesBox_Kadastr_OnClick
-Declare Sub Dialog1btnEraseOnly_OnClick
-Declare Sub Dialog1CBoxEraseKadastr_OnClick
-Declare Sub Dialog1btnTestKadNumber_OnClick

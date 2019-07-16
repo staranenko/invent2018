@@ -1,7 +1,7 @@
 Dialog
  Title "Сопоставление участков - v1.2"
  Width 590 Height 471
- Position 506, 124
+ Position 1265, 411
  Calling DialogPlotComparison_OnShow
 CenterDisplay
 '//{$Controls}

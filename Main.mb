@@ -1,6 +1,7 @@
 '//&Инвентаризация2018menuMain&Приложение0100
 	'//Сопоставление участков...MenuItemMatchingPlotПункт подменю0100
 	'//Удаленность участков...MenuItemNearAreasПункт подменю0100
+	'//Заполнить УПКС...MenuItemFillUpksПункт подменю0110
 	'//О программе...MenuItemAboutПункт подменю0100
 	'//-menuSeparator1-0100
 	'//Вы&ходmenuExitВы&ход0100
@@ -17,6 +18,7 @@ Call BeforeMenuCreate
 Create Menu "&Инвентаризация2018" ID menuMain As
   "Сопоставление участков..." ID MenuItemMatchingPlot HelpMsg "Пункт подменю" Calling MenuItemMatchingPlot_OnClick,
   "Удаленность участков..." ID MenuItemNearAreas HelpMsg "Пункт подменю" Calling MenuItemNearAreas_OnClick,
+  "Заполнить УПКС..." ID MenuItemFillUpks HelpMsg "Пункт подменю" Calling MenuItemFillUpks_OnClick,
   "О программе..." ID MenuItemAbout HelpMsg "Пункт подменю" Calling MenuItemAbout_OnClick,
   "(-",
   "Вы&ход" ID menuExit HelpMsg "Вы&ход" Calling menuExit_OnClick

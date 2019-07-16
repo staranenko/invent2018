@@ -1,7 +1,7 @@
 Dialog
- Title "Удаленность участков"
+ Title "Удаленность участков - v0.1"
  Width 422 Height 375
- Position 435, 224
+ Position 1111, 320
  Calling DialogNearAreas_OnShow
 CenterDisplay
 '//{$Controls}

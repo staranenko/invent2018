@@ -1,7 +1,7 @@
 Dialog
  Title "О программе Инвентаризация 2018"
  Width 396 Height 236
- Position 342, 117
+ Position 1168, 137
  Calling DialogAbout_OnShow
 CenterDisplay
 '//{$Controls}

@@ -1,3 +1,4 @@
+Include "DialogFillUpks.def"
 Include "DialogNearAreas.def"
 Include "DialogPlotComparison.def"
 Include "DialogAbout.def"
@@ -35,4 +36,8 @@ End Sub
 
 Sub MenuItemNearAreas_OnClick
     Call DialogNearAreas_Execute
+End Sub
+
+Sub MenuItemFillUpks_OnClick
+    Call DialogFillUpks_Execute
 End Sub

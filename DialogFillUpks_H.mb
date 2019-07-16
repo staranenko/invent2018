@@ -1,167 +1,157 @@
-Include "MapBasic.def"
-Include "DialogNearAreas.def"
+Include "MAPBASIC.DEF"
+Include "DialogFillUpks.def"
 Include "TableMenhode.def"
-
-'Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
-'Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
-Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\GeoFunction.def"
-
-'Не редактируйте нижеследующие закомментированные строки!
-'//{$DLG_HANDLERS DialogNearAreas.mb}
-
-'//{$BEGIN GLOBALS FOR CONTROL DNA_ResultTableList}
-Global DNA_ResultTableList_sTableName As String
-Global DNA_ResultTableList_sTablePath As String
-Global DNA_ResultTableList_saLayers() As String
-Global DNA_ResultTableList_WinID As Integer
-Global DNA_ResultTableList_CurrTable As String
-Global DNA_ResultTableList_LayerCount As Integer
-Global DNA_ResultTableList_I As Integer
-'//{$END GLOBALS FOR CONTROL DNA_ResultTableList}
-
-'//{$BEGIN GLOBALS FOR CONTROL DNA_SourceTableList}
-Global DNA_SourceTableList_sTableName As String
-Global DNA_SourceTableList_sTablePath As String
-Global DNA_SourceTableList_saLayers() As String
-Global DNA_SourceTableList_WinID As Integer
-Global DNA_SourceTableList_CurrTable As String
-Global DNA_SourceTableList_LayerCount As Integer
-Global DNA_SourceTableList_I As Integer
-'//{$END GLOBALS FOR CONTROL DNA_SourceTableList}
 
 Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
 Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
 
-Declare Sub LoadIniNear
-Declare Sub SaveIniNear
-Declare Sub GetDialogElementsNear
-Declare Sub SetDialogElementsNear
-
-' Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
-' Declare function getColNumber(byval table as string, byval colName as string) as integer
-
-Declare function SelectProjectionNear(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
-Declare Sub GetAndSetCoordSysNear(byval TableName as string, byval setType as string)
-Declare Function WhatSystemOfCoordinatesNear(byval TablesName as string) as string
-Declare Function WhatSystemOfCoordinatesWindowNear(byval WindowName as integer) as string
+Declare Sub LoadIniUpks
+Declare Sub SaveIniUpks
+Declare Sub GetDialogElementsUpks
+Declare Sub SetDialogElementsUpks
 
 Global Debug As logical
-
-Dim realyCoordSys As string
 
 Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
 Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
 
 
-Sub DialogNearAreas_OnShow
+'Не редактируйте нижеследующие закомментированные строки!
+'//{$DLG_HANDLERS DialogFillUpks.mb}
 
-'//{$BEGIN INIT CODE FOR CONTROL DNA_ResultTableList}
-   ReDim DNA_ResultTableList_saLayers(0)
-   DNA_ResultTableList_WinID = FrontWindow()
-   If DNA_ResultTableList_WinID Then
-      DNA_ResultTableList_LayerCount = NumTables()
+'//{$BEGIN GLOBALS FOR CONTROL DialogFillUpksTableUpks}
+Global DialogFillUpksTableUpks_sTableName As String
+Global DialogFillUpksTableUpks_sTablePath As String
+Global DialogFillUpksTableUpks_saLayers() As String
+Global DialogFillUpksTableUpks_WinID As Integer
+Global DialogFillUpksTableUpks_CurrTable As String
+Global DialogFillUpksTableUpks_LayerCount As Integer
+Global DialogFillUpksTableUpks_I As Integer
+'//{$END GLOBALS FOR CONTROL DialogFillUpksTableUpks}
+
+'//{$BEGIN GLOBALS FOR CONTROL DialogFillUpksmTableZU}
+Global DialogFillUpksmTableZU_sTableName As String
+Global DialogFillUpksmTableZU_sTablePath As String
+Global DialogFillUpksmTableZU_saLayers() As String
+Global DialogFillUpksmTableZU_WinID As Integer
+Global DialogFillUpksmTableZU_CurrTable As String
+Global DialogFillUpksmTableZU_LayerCount As Integer
+Global DialogFillUpksmTableZU_I As Integer
+'//{$END GLOBALS FOR CONTROL DialogFillUpksmTableZU}
+
+
+Sub DialogFillUpks_OnShow
+
+'//{$BEGIN INIT CODE FOR CONTROL DialogFillUpksTableUpks}
+   ReDim DialogFillUpksTableUpks_saLayers(0)
+   DialogFillUpksTableUpks_WinID = FrontWindow()
+   If DialogFillUpksTableUpks_WinID Then
+      DialogFillUpksTableUpks_LayerCount = NumTables()
    Else
-      DNA_ResultTableList_LayerCount = 0
-      Alter Control DNA_ResultTableList Title "-Нет открытых таблиц-" Disable
+      DialogFillUpksTableUpks_LayerCount = 0
+      Alter Control DialogFillUpksTableUpks Title "-Нет открытых таблиц-" Disable
    End If
-   If (NumTables() > 0)AND( DNA_ResultTableList_LayerCount <> 0) Then
-      ReDim DNA_ResultTableList_saLayers(DNA_ResultTableList_LayerCount)
-      For DNA_ResultTableList_i = 1 to DNA_ResultTableList_LayerCount
-         DNA_ResultTableList_saLayers(DNA_ResultTableList_i) = TableInfo(DNA_ResultTableList_i, TAB_INFO_NAME)
+   If (NumTables() > 0)AND( DialogFillUpksTableUpks_LayerCount <> 0) Then
+      ReDim DialogFillUpksTableUpks_saLayers(DialogFillUpksTableUpks_LayerCount)
+      For DialogFillUpksTableUpks_i = 1 to DialogFillUpksTableUpks_LayerCount
+         DialogFillUpksTableUpks_saLayers(DialogFillUpksTableUpks_i) = TableInfo(DialogFillUpksTableUpks_i, TAB_INFO_NAME)
       Next
-      Alter Control DNA_ResultTableList Title From Variable DNA_ResultTableList_saLayers
+      Alter Control DialogFillUpksTableUpks Title From Variable DialogFillUpksTableUpks_saLayers
    End If
-'//{$END INIT CODE FOR CONTROL DNA_ResultTableList}
+'//{$END INIT CODE FOR CONTROL DialogFillUpksTableUpks}
 
-'//{$BEGIN INIT CODE FOR CONTROL DNA_SourceTableList}
-   ReDim DNA_SourceTableList_saLayers(0)
-   DNA_SourceTableList_WinID = FrontWindow()
-   If DNA_SourceTableList_WinID Then
-      DNA_SourceTableList_LayerCount = NumTables()
+'//{$BEGIN INIT CODE FOR CONTROL DialogFillUpksmTableZU}
+   ReDim DialogFillUpksmTableZU_saLayers(0)
+   DialogFillUpksmTableZU_WinID = FrontWindow()
+   If DialogFillUpksmTableZU_WinID Then
+      DialogFillUpksmTableZU_LayerCount = NumTables()
    Else
-      DNA_SourceTableList_LayerCount = 0
-      Alter Control DNA_SourceTableList Title "-Нет открытых таблиц-" Disable
+      DialogFillUpksmTableZU_LayerCount = 0
+      Alter Control DialogFillUpksmTableZU Title "-Нет открытых таблиц-" Disable
    End If
-   If (NumTables() > 0)AND( DNA_SourceTableList_LayerCount <> 0) Then
-      ReDim DNA_SourceTableList_saLayers(DNA_SourceTableList_LayerCount)
-      For DNA_SourceTableList_i = 1 to DNA_SourceTableList_LayerCount
-         DNA_SourceTableList_saLayers(DNA_SourceTableList_i) = TableInfo(DNA_SourceTableList_i, TAB_INFO_NAME)
+   If (NumTables() > 0)AND( DialogFillUpksmTableZU_LayerCount <> 0) Then
+      ReDim DialogFillUpksmTableZU_saLayers(DialogFillUpksmTableZU_LayerCount)
+      For DialogFillUpksmTableZU_i = 1 to DialogFillUpksmTableZU_LayerCount
+         DialogFillUpksmTableZU_saLayers(DialogFillUpksmTableZU_i) = TableInfo(DialogFillUpksmTableZU_i, TAB_INFO_NAME)
       Next
-      Alter Control DNA_SourceTableList Title From Variable DNA_SourceTableList_saLayers
+      Alter Control DialogFillUpksmTableZU Title From Variable DialogFillUpksmTableZU_saLayers
    End If
-'//{$END INIT CODE FOR CONTROL DNA_SourceTableList}
+'//{$END INIT CODE FOR CONTROL DialogFillUpksmTableZU}
 
-   Call SetDialogElementsNear
-
-   Call DNA_SourceTableList_OnClick
-   Call DNA_ResultTableList_OnClick
-
-End Sub
-
-
-Sub DialogNearAreas_OnOKModalResult
+   Call SetDialogElementsUpks
+   Call DialogFillUpksmTableZU_OnClick
+   Call DialogFillUpksTableUpks_OnClick
 
 End Sub
 
 
-Sub DialogNearAreas_OnCancelModalResult
+Sub DialogFillUpks_OnOKModalResult
 
 End Sub
 
 
-Sub DNA_btnOK_OnClick
-   Call GetDialogElementsNear
-End Sub
-
-
-Sub DNA_btnCancel_OnClick
+Sub DialogFillUpks_OnCancelModalResult
 
 End Sub
 
 
-Sub DNA_SourceTableList_OnClick
-   If UBound(DNA_SourceTableList_saLayers) > 0 Then
-      DNA_SourceTableList_sTableName = DNA_SourceTableList_saLayers(ReadControlValue(DNA_SourceTableList))
-      'print "DNA_SourceTableList_sTableName ="+DNA_SourceTableList_sTableName
-      Call SelectTable(DNA_SourceTableList_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
-      Alter Control DNA_SourceTableFieldsList Title From Variable FullColumnsInfo_1
-      Alter Control DNA_SourceTableFieldsList Enable
-   End If
+Sub DialogFillUpksbtnOK_OnClick
+
 End Sub
 
 
-Sub DNA_ResultTableList_OnClick
-   If UBound(DNA_ResultTableList_saLayers) > 0 Then
-      DNA_ResultTableList_sTableName = DNA_ResultTableList_saLayers(ReadControlValue(DNA_ResultTableList))
-      'print "DNA_ResultTableList_sTableName ="+DNA_ResultTableList_sTableName
-      Call SelectTable(DNA_ResultTableList_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
-      Alter Control DNA_ResultTableFieldsList Title From Variable FullColumnsInfo_2
-      Alter Control DNA_ResultTableFieldsList Enable
+Sub DialogFillUpksbtnCancel_OnClick
+
+End Sub
+
+
+Sub DialogFillUpksmTableZU_OnClick
+   If UBound(DialogFillUpksmTableZU_saLayers) > 0 Then
+      DialogFillUpksmTableZU_sTableName = DialogFillUpksmTableZU_saLayers(ReadControlValue(DialogFillUpksmTableZU))
+      'print "DialogFillUpksmTableZU_sTableName ="+DialogFillUpksmTableZU_sTableName
+      Call SelectTable(DialogFillUpksmTableZU_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
+      Alter Control DialogFillUpksPmZuNumKvartal Title From Variable FullColumnsInfo_1
+      Alter Control DialogFillUpksPmZuNumKvartal Enable
+      Alter Control DialogFillUpksPmZuKodUpks Title From Variable FullColumnsInfo_1
+      Alter Control DialogFillUpksPmZuKodUpks Enable
+      Alter Control DialogFillUpksPmZuDeviation Title From Variable FullColumnsInfo_1
+      Alter Control DialogFillUpksPmZuDeviation Enable
    End If
 End Sub
 
 
-Sub DNA_SourceTableFieldsList_OnClick
+Sub DialogFillUpksPmZuKodUpks_OnClick
 
 End Sub
 
 
-Sub DNA_ResultTableFieldsList_OnClick
+Sub DialogFillUpksPmZuNumKvartal_OnClick
 
 End Sub
 
 
-Sub DNA_UnitsDistance_OnClick
+Sub DialogFillUpksTableUpks_OnClick
+   If UBound(DialogFillUpksTableUpks_saLayers) > 0 Then
+      DialogFillUpksTableUpks_sTableName = DialogFillUpksTableUpks_saLayers(ReadControlValue(DialogFillUpksTableUpks))
+      'print "DialogFillUpksTableUpks_sTableName ="+DialogFillUpksTableUpks_sTableName
+      Call SelectTable(DialogFillUpksTableUpks_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
+      Alter Control DialogFillUpksPmUpksNum Title From Variable FullColumnsInfo_2
+      Alter Control DialogFillUpksPmUpksNum Enable
+   End If
+End Sub
+
+
+Sub DialogFillUpksPmUpksNum_OnClick
 
 End Sub
 
 
-Sub DNA_TypeAngle_OnClick
+Sub DialogFillUpksPmZuDeviation_OnClick
 
 End Sub
 
 
-Sub GetDialogElementsNear
+Sub GetDialogElementsUpks
    ' Debug = ReadControlValue(CheckBoxDebug)
 
    ' TablePhotogrametry.Num = ReadControlValue(myTablesComboBox2)
@@ -206,8 +196,14 @@ Sub GetDialogElementsNear
 End Sub
 
 
-Sub SetDialogElementsNear
+Sub SetDialogElementsUpks
    Dim iTable, ColNum as integer
+
+   Alter Control DialogFillUpksPmZuNumKvartal Disable
+   Alter Control DialogFillUpksPmZuKodUpks Disable
+   Alter Control DialogFillUpksPmZuDeviation Disable
+
+   Alter Control DialogFillUpksPmUpksNum Disable
 
    ' Alter Control CheckBoxDebug Value Debug
    ' ALter Control EditTextTolerance Value str$(Tolerance)
@@ -249,7 +245,7 @@ Sub SetDialogElementsNear
 End Sub
 
 
-Sub LoadIniNear
+Sub LoadIniUpks
    Dim PachApplicationMBX, FullINIFileName As String
    Dim FormName, KeyString, ValueString As String
    Dim GetIniKey As String
@@ -337,7 +333,7 @@ Sub LoadIniNear
 End Sub
 
 
-Sub SaveIniNear
+Sub SaveIniUpks
     Dim PachApplicationMBX, FullINIFileName As String
     Dim FormName, KeyString, ValueString As String
     Dim SetIniKey As String
@@ -369,62 +365,3 @@ Sub SaveIniNear
 
    ' SetIniKey = IniWriteString(FullINIFileName,"Параметры","EraseByKadastr",str$(EraseByKadastr))
 End Sub
-
-
-Sub GetAndSetCoordSysNear(byval TableName as string, byval setType as string)
-    If tableinfo(TableName, TAB_INFO_MAPPABLE) = false Then
-       'Note "Таблица '" + TableName + "' не содержит графических объектов. Обработка остановлена."
-       Exit Sub
-    End If
-    realyCoordSys = SelectProjectionNear(setType, TableName, FrontWindow())
-    'Note realyCoordSys
-    If realyCoordSys <> "Ошибка" Then
-       'Note "Результат: "  + realyCoordSys
-       run command "Set CoordSys " + realyCoordSys
-    Else
-       'Note "ошибка определения системы координат..."
-    end If
-    'Print realyCoordSys
-End Sub
-
-
-function SelectProjectionNear(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
-   Dim realyTableName As string
-   Do Case Metod
-      Case "Объект"
-           If tableinfo(TableName, TAB_INFO_TEMP) Then
-              realyTableName = selectioninfo(SEL_INFO_TABLENAME)
-           Else
-               realyTableName = TableName
-           End If
-           realyCoordSys = WhatSystemOfCoordinatesNear(realyTableName)
-      Case "Окно"
-           realyCoordSys = WhatSystemOfCoordinatesWindowNear(WinowsNumber)
-      Case "Выбор"
-
-      Case Else
-
-   End Case
-   SelectProjectionNear = realyCoordSys
-End Function
-
-
-Function WhatSystemOfCoordinatesNear (byval TablesName as string) as string
-'                   Note tableinfo(TablesName, 3) 'TAB_INFO_TYPE = 3
-                        'Note TablesName
-         If tableinfo(TablesName, 7) then  ' TAB_INFO_TEMP = 7
-            TablesName = tableinfo(TablesName, 12) ' TAB_INFO_MAPPABLE_TABLE = 12
-         end if
-         WhatSystemOfCoordinatesNear =  mid$(TableInfo(TablesName,29),len("CoordSys") + 2,len(TableInfo(TablesName,29))-len("CoordSys")) 'TAB_INFO_COORDSYS_NAME=30, TAB_INFO_COORDSYS_CLAUSE=29
-End Function
-
-Function WhatSystemOfCoordinatesWindowNear (byval WindowName as integer) as string
-         'Note WindowName
-         'Note MapperInfo(WindowName,22)
-         If WindowInfo(WindowName, 3) = 1 then  'WIN_INFO_TYPE=3, WIN_MAPPER=1
-            WhatSystemOfCoordinatesWindowNear =  mid$(MapperInfo(WindowName,22),len("CoordSys") + 2,len(MapperInfo(WindowName,22))-len("CoordSys")) 'TAB_INFO_COORDSYS_NAME=30, MAPPER_INFO_COORDSYS_CLAUSE_WITH_BOUNDS=22
-         else
-            WhatSystemOfCoordinatesWindowNear = "Ошибка"
-            Note "Для определения системы координат окна карты, требуется ОКНО КАРТЫ!"
-         end If
-End Function
