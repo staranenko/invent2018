@@ -1,9 +1,11 @@
 Include "MAPBASIC.DEF"
 Include "DialogFillUpks.def"
-Include "TableMenhode.def"
 
 Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
 Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
+
+declare Sub SelectTableUpks(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+declare function getColNumberUpks(byval table as string, byval colName as string) as integer
 
 Declare Sub LoadIniUpks
 Declare Sub SaveIniUpks
@@ -109,7 +111,7 @@ Sub DialogFillUpksmTableZU_OnClick
    If UBound(DialogFillUpksmTableZU_saLayers) > 0 Then
       DialogFillUpksmTableZU_sTableName = DialogFillUpksmTableZU_saLayers(ReadControlValue(DialogFillUpksmTableZU))
       'print "DialogFillUpksmTableZU_sTableName ="+DialogFillUpksmTableZU_sTableName
-      Call SelectTable(DialogFillUpksmTableZU_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
+      Call SelectTableUpks(DialogFillUpksmTableZU_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
       Alter Control DialogFillUpksPmZuNumKvartal Title From Variable FullColumnsInfo_1
       Alter Control DialogFillUpksPmZuNumKvartal Enable
       Alter Control DialogFillUpksPmZuKodUpks Title From Variable FullColumnsInfo_1
@@ -134,7 +136,7 @@ Sub DialogFillUpksTableUpks_OnClick
    If UBound(DialogFillUpksTableUpks_saLayers) > 0 Then
       DialogFillUpksTableUpks_sTableName = DialogFillUpksTableUpks_saLayers(ReadControlValue(DialogFillUpksTableUpks))
       'print "DialogFillUpksTableUpks_sTableName ="+DialogFillUpksTableUpks_sTableName
-      Call SelectTable(DialogFillUpksTableUpks_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
+      Call SelectTableUpks(DialogFillUpksTableUpks_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
       Alter Control DialogFillUpksPmUpksNum Title From Variable FullColumnsInfo_2
       Alter Control DialogFillUpksPmUpksNum Enable
    End If
@@ -365,3 +367,63 @@ Sub SaveIniUpks
 
    ' SetIniKey = IniWriteString(FullINIFileName,"Параметры","EraseByKadastr",str$(EraseByKadastr))
 End Sub
+
+
+Sub SelectTableUpks(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+     Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
+     Dim SpaceString As String
+         ReDim FullColumnsInfo(0)
+         ReDim TableColumns(0)
+         ReDim TypeColumns(0)
+         For i_counter = 1 to NumCols(TableName)
+             ReDim TableColumns(UBound(TableColumns)+1)
+             ReDim TypeColumns(UBound(TypeColumns)+1)
+             TableColumns(i_counter) = ColumnInfo(TableName,"COL"+i_counter,COL_INFO_NAME)
+             Do Case  ColumnInfo(TableName,"COL"+i_counter,COL_INFO_TYPE)
+                      Case COL_TYPE_CHAR
+                           TypeColumns(i_counter) = "Символьный"
+                      Case COL_TYPE_DECIMAL
+                           TypeColumns(i_counter) = "Десятичный"
+                      Case COL_TYPE_FLOAT
+                           TypeColumns(i_counter) = "Вещественный"
+                      Case COL_TYPE_INTEGER
+                           TypeColumns(i_counter) = "Целочисленный (4 байт)"
+                      Case COL_TYPE_SMALLINT
+                           TypeColumns(i_counter) = "Короткое целое число (2 байт)"
+                      Case COL_TYPE_DATE
+                           TypeColumns(i_counter) = "Дата"
+                      Case COL_TYPE_LOGICAL
+                           TypeColumns(i_counter) = "Логический"
+                      Case COL_TYPE_GRAPHIC
+                           TypeColumns(i_counter) = "Специальный тип колонки (Obj)"
+                      Case Else
+                           Note "Ошибка чтения таблицы " + TableName
+                           Exit Sub
+             End Case
+         Next
+         For i_counter = 1 to NumCols(TableName) - 1
+             i_MaxLen = Maximum(Len(TableColumns(i_counter)),Len(TableColumns(i_counter + 1)))
+             MaxLen = Maximum(MaxLen,i_MaxLen)
+         Next
+         For i_counter = 1 to NumCols(TableName)
+             ReDim FullColumnsInfo(UBound(FullColumnsInfo)+1)
+             SpaceString = ""
+             For j_counter = 1 to Fix((MaxLen - Len(TableColumns(i_counter)))*1.8)
+                 SpaceString = SpaceString + " "
+             Next
+             FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
+         Next
+End Sub
+
+
+function getColNumberUpks(byval table as string, byval colName as string) as integer
+dim iCol as integer
+
+   for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
+      if UCase$(colName) = UCase$(ColumnInfo(table, "COL"+iCol, COL_INFO_NAME)) then
+         getColNumberUpks = iCol
+         Exit function
+      end if
+   next
+
+end function

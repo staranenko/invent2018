@@ -1,6 +1,5 @@
 Include "MapBasic.def"
 Include "DialogPlotComparison.def"
-Include "TableMenhode.def"
 
 Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
 Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
@@ -56,13 +55,13 @@ Declare Sub SetDialogElements
 Declare function SelectProjection(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
 Declare Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
 
-' Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
-' Declare Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
-' Declare Function TableIsOpen(byval Name as string) as logical
-' Declare function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualColumn() as logical) as logical
+Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+Declare Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
+Declare Function TableIsOpen(byval Name as string) as logical
+Declare function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualColumn() as logical) as logical
 Declare function reStructureTable(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
-' Declare function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
-' Declare function getColNumber(byval table as string, byval colName as string) as integer
+Declare function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
+Declare function getColNumber(byval table as string, byval colName as string) as integer
 Declare function CopyFieldValue(byval source as string, byval receiver as string, byval UpdateColumnNumber as integer) as logical
 Declare function CopyFieldValueAndConcat(byval sourceName as string, byval receiverName as string, byval UpdateColumnNumber as integer) as logical
 Declare Sub MainThread
@@ -857,51 +856,51 @@ Sub CheckBoxDebug_OnClick
 End Sub
 
 
-' Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
-'      Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
-'      Dim SpaceString As String
-'          ReDim FullColumnsInfo(0)
-'          ReDim TableColumns(0)
-'          ReDim TypeColumns(0)
-'          For i_counter = 1 to NumCols(TableName)
-'              ReDim TableColumns(UBound(TableColumns)+1)
-'              ReDim TypeColumns(UBound(TypeColumns)+1)
-'              TableColumns(i_counter) = ColumnInfo(TableName,"COL"+i_counter,COL_INFO_NAME)
-'              Do Case  ColumnInfo(TableName,"COL"+i_counter,COL_INFO_TYPE)
-'                       Case COL_TYPE_CHAR
-'                            TypeColumns(i_counter) = "Символьный"
-'                       Case COL_TYPE_DECIMAL
-'                            TypeColumns(i_counter) = "Десятичный"
-'                       Case COL_TYPE_FLOAT
-'                            TypeColumns(i_counter) = "Вещественный"
-'                       Case COL_TYPE_INTEGER
-'                            TypeColumns(i_counter) = "Целочисленный (4 байт)"
-'                       Case COL_TYPE_SMALLINT
-'                            TypeColumns(i_counter) = "Короткое целое число (2 байт)"
-'                       Case COL_TYPE_DATE
-'                            TypeColumns(i_counter) = "Дата"
-'                       Case COL_TYPE_LOGICAL
-'                            TypeColumns(i_counter) = "Логический"
-'                       Case COL_TYPE_GRAPHIC
-'                            TypeColumns(i_counter) = "Специальный тип колонки (Obj)"
-'                       Case Else
-'                            Note "Ошибка чтения таблицы " + TableName
-'                            Exit Sub
-'              End Case
-'          Next
-'          For i_counter = 1 to NumCols(TableName) - 1
-'              i_MaxLen = Maximum(Len(TableColumns(i_counter)),Len(TableColumns(i_counter + 1)))
-'              MaxLen = Maximum(MaxLen,i_MaxLen)
-'          Next
-'          For i_counter = 1 to NumCols(TableName)
-'              ReDim FullColumnsInfo(UBound(FullColumnsInfo)+1)
-'              SpaceString = ""
-'              For j_counter = 1 to Fix((MaxLen - Len(TableColumns(i_counter)))*1.8)
-'                  SpaceString = SpaceString + " "
-'              Next
-'              FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
-'          Next
-' End Sub
+Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+     Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
+     Dim SpaceString As String
+         ReDim FullColumnsInfo(0)
+         ReDim TableColumns(0)
+         ReDim TypeColumns(0)
+         For i_counter = 1 to NumCols(TableName)
+             ReDim TableColumns(UBound(TableColumns)+1)
+             ReDim TypeColumns(UBound(TypeColumns)+1)
+             TableColumns(i_counter) = ColumnInfo(TableName,"COL"+i_counter,COL_INFO_NAME)
+             Do Case  ColumnInfo(TableName,"COL"+i_counter,COL_INFO_TYPE)
+                      Case COL_TYPE_CHAR
+                           TypeColumns(i_counter) = "Символьный"
+                      Case COL_TYPE_DECIMAL
+                           TypeColumns(i_counter) = "Десятичный"
+                      Case COL_TYPE_FLOAT
+                           TypeColumns(i_counter) = "Вещественный"
+                      Case COL_TYPE_INTEGER
+                           TypeColumns(i_counter) = "Целочисленный (4 байт)"
+                      Case COL_TYPE_SMALLINT
+                           TypeColumns(i_counter) = "Короткое целое число (2 байт)"
+                      Case COL_TYPE_DATE
+                           TypeColumns(i_counter) = "Дата"
+                      Case COL_TYPE_LOGICAL
+                           TypeColumns(i_counter) = "Логический"
+                      Case COL_TYPE_GRAPHIC
+                           TypeColumns(i_counter) = "Специальный тип колонки (Obj)"
+                      Case Else
+                           Note "Ошибка чтения таблицы " + TableName
+                           Exit Sub
+             End Case
+         Next
+         For i_counter = 1 to NumCols(TableName) - 1
+             i_MaxLen = Maximum(Len(TableColumns(i_counter)),Len(TableColumns(i_counter + 1)))
+             MaxLen = Maximum(MaxLen,i_MaxLen)
+         Next
+         For i_counter = 1 to NumCols(TableName)
+             ReDim FullColumnsInfo(UBound(FullColumnsInfo)+1)
+             SpaceString = ""
+             For j_counter = 1 to Fix((MaxLen - Len(TableColumns(i_counter)))*1.8)
+                 SpaceString = SpaceString + " "
+             Next
+             FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
+         Next
+End Sub
 
 
 Sub PopupMenu_Kadastr_KadNum_OnClick
@@ -920,71 +919,71 @@ Sub myTablesBox_Kadastr_OnClick
 End Sub
 
 
-' Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
-' dim iCol as integer
-'    ' note "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList))
-'    if Num > 0 then
-'       for iCol = 1 to UBound(ColList)
-'          if ColList(iCol) = Name then
-'             ColNumber = iCol
-'             Exit Function
-'          end if
-'       next
-'    Else
-'       ColNumber = 0
-'    end if
-' end function
+Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
+dim iCol as integer
+   ' note "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList))
+   if Num > 0 then
+      for iCol = 1 to UBound(ColList)
+         if ColList(iCol) = Name then
+            ColNumber = iCol
+            Exit Function
+         end if
+      next
+   Else
+      ColNumber = 0
+   end if
+end function
 
 
-' Function TableIsOpen(byval Name as string) as logical
-' Dim i as integer
+Function TableIsOpen(byval Name as string) as logical
+Dim i as integer
 
-'    for i = 1 to NumTables()
-'       if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)        End If
-'       if TableInfo(i, TAB_INFO_NAME) = Name then
-'             TableIsOpen = true
-'             Exit Function
-'       End If
-'    Next
-'    TableIsOpen = false
+   for i = 1 to NumTables()
+      if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)        End If
+      if TableInfo(i, TAB_INFO_NAME) = Name then
+            TableIsOpen = true
+            Exit Function
+      End If
+   Next
+   TableIsOpen = false
 
-'    if Debug then Print "Таблица " + Name + " не открыта."        End If
-' End Function
+   if Debug then Print "Таблица " + Name + " не открыта."        End If
+End Function
 
 
-' function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
-' Dim iColChekingTable, iColBaseTable as integer
+function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+Dim iColChekingTable, iColBaseTable as integer
 
-'    redim isEqualCol(TableInfo(tableBase, TAB_INFO_NCOLS))
+   redim isEqualCol(TableInfo(tableBase, TAB_INFO_NCOLS))
 
-'    for iColBaseTable = 1 to TableInfo(tableBase, TAB_INFO_NCOLS)
-'       isEqualCol(iColBaseTable) = false
+   for iColBaseTable = 1 to TableInfo(tableBase, TAB_INFO_NCOLS)
+      isEqualCol(iColBaseTable) = false
 
-'       if Debug then
-'          Print "Проверяется таблица " + tableBase + " с базовой таблицей " + tableCheking
-'       End If
+      if Debug then
+         Print "Проверяется таблица " + tableBase + " с базовой таблицей " + tableCheking
+      End If
 
-'       for iColChekingTable = 1 to TableInfo(tableCheking, TAB_INFO_NCOLS)
-'          if Debug then
-'                Print "......поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " и " + ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)
-'          End If
+      for iColChekingTable = 1 to TableInfo(tableCheking, TAB_INFO_NCOLS)
+         if Debug then
+               Print "......поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " и " + ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)
+         End If
 
-'          if UCase$(ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME)) = UCase$(ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)) then
-'                isEqualCol(iColBaseTable) = true
-'                exit for
-'          end if
-'       Next
-'    next
+         if UCase$(ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME)) = UCase$(ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)) then
+               isEqualCol(iColBaseTable) = true
+               exit for
+         end if
+      Next
+   next
 
-'    isEqualTableStructure = true
-'    for iColBaseTable = 1 to UBound(isEqualCol)
-'       if isEqualCol(iColBaseTable) = false then
-'          isEqualTableStructure = false
-'          'exit function
-'          if Debug then Print "Поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " в таблице " + tableBase + " нет." end if
-'       End If
-'    Next
-' end function
+   isEqualTableStructure = true
+   for iColBaseTable = 1 to UBound(isEqualCol)
+      if isEqualCol(iColBaseTable) = false then
+         isEqualTableStructure = false
+         'exit function
+         if Debug then Print "Поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " в таблице " + tableBase + " нет." end if
+      End If
+   Next
+end function
 
 
 function reStructureTable(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
@@ -1031,49 +1030,49 @@ dim layerInMap, colsAdded as logical
 end function
 
 
-' function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
-'    getColType = false
+function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
+   getColType = false
 
-'    colname = ColumnInfo(table, "COL"+col, COL_INFO_NAME)
+   colname = ColumnInfo(table, "COL"+col, COL_INFO_NAME)
 
-'    do case ColumnInfo(table, "COL"+col, COL_INFO_TYPE)
-'       case COL_TYPE_CHAR
-'          coltype = "Char(" + ColumnInfo(table, "COL"+col, COL_INFO_WIDTH) + ")"
-'       case COL_TYPE_DECIMAL
-'          coltype = "Decimal(" + ColumnInfo(table, "COL"+col, COL_INFO_WIDTH) + "," + ColumnInfo(table, "COL"+col, COL_INFO_DECPLACES) + ")"
-'       case COL_TYPE_INTEGER
-'          coltype = "Integer"
-'       case COL_TYPE_SMALLINT
-'          coltype = "SmallInt"
-'       case COL_TYPE_DATE
-'          coltype = "Date"
-'       case COL_TYPE_LOGICAL
-'          coltype = "Logical"
-'       case COL_TYPE_GRAPHIC
-'          coltype = "obj"
-'       case COL_TYPE_FLOAT
-'          coltype = "Float"
-'       case COL_TYPE_TIME
-'          coltype = "Time"
-'       case COL_TYPE_DATETIME
-'          coltype = "DateTime"
-'    end case
+   do case ColumnInfo(table, "COL"+col, COL_INFO_TYPE)
+      case COL_TYPE_CHAR
+         coltype = "Char(" + ColumnInfo(table, "COL"+col, COL_INFO_WIDTH) + ")"
+      case COL_TYPE_DECIMAL
+         coltype = "Decimal(" + ColumnInfo(table, "COL"+col, COL_INFO_WIDTH) + "," + ColumnInfo(table, "COL"+col, COL_INFO_DECPLACES) + ")"
+      case COL_TYPE_INTEGER
+         coltype = "Integer"
+      case COL_TYPE_SMALLINT
+         coltype = "SmallInt"
+      case COL_TYPE_DATE
+         coltype = "Date"
+      case COL_TYPE_LOGICAL
+         coltype = "Logical"
+      case COL_TYPE_GRAPHIC
+         coltype = "obj"
+      case COL_TYPE_FLOAT
+         coltype = "Float"
+      case COL_TYPE_TIME
+         coltype = "Time"
+      case COL_TYPE_DATETIME
+         coltype = "DateTime"
+   end case
 
-'    getColType = true
-' end function
+   getColType = true
+end function
 
 
-' function getColNumber(byval table as string, byval colName as string) as integer
-' dim iCol as integer
+function getColNumber(byval table as string, byval colName as string) as integer
+dim iCol as integer
 
-'    for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
-'       if UCase$(colName) = UCase$(ColumnInfo(table, "COL"+iCol, COL_INFO_NAME)) then
-'          getColNumber = iCol
-'          Exit function
-'       end if
-'    next
+   for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
+      if UCase$(colName) = UCase$(ColumnInfo(table, "COL"+iCol, COL_INFO_NAME)) then
+         getColNumber = iCol
+         Exit function
+      end if
+   next
 
-' end function
+end function
 
 
 function CopyFieldValue(byval sourceName as string, byval receiverName as string, byval UpdateColumnNumber as integer) as logical

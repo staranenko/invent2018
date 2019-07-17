@@ -1,11 +1,13 @@
-declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
-declare function getColNumber(byval table as string, byval colName as string) as integer
-declare function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
-declare Function TableIsOpen(byval Name as string) as logical
-declare function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
-declare Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
+' #MODELE#
 
-Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+declare Sub SelectTable#MODELE#(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+declare function getColNumber#MODELE#(byval table as string, byval colName as string) as integer
+declare function getColType#MODELE#(byval table as string, byval col as integer, colname as string, coltype as string) as logical
+declare Function TableIsOpen#MODELE#(byval Name as string) as logical
+declare function isEqualTableStructure#MODELE#(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+declare Function ColNumber#MODELE#(byval Num as integer, byval Name as string, ColList() as string) as integer
+
+Sub SelectTable#MODELE#(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
      Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
      Dim SpaceString As String
          ReDim FullColumnsInfo(0)
@@ -52,12 +54,12 @@ Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullCo
 End Sub
 
 
-function getColNumber(byval table as string, byval colName as string) as integer
+function getColNumber#MODELE#(byval table as string, byval colName as string) as integer
 dim iCol as integer
 
    for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
       if UCase$(colName) = UCase$(ColumnInfo(table, "COL"+iCol, COL_INFO_NAME)) then
-         getColNumber = iCol
+         getColNumber#MODELE# = iCol
          Exit function
       end if
    next
@@ -65,8 +67,8 @@ dim iCol as integer
 end function
 
 
-function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
-   getColType = false
+function getColType#MODELE#(byval table as string, byval col as integer, colname as string, coltype as string) as logical
+   getColType#MODELE# = false
 
    colname = ColumnInfo(table, "COL"+col, COL_INFO_NAME)
 
@@ -93,27 +95,27 @@ function getColType(byval table as string, byval col as integer, colname as stri
          coltype = "DateTime"
    end case
 
-   getColType = true
+   getColType#MODELE# = true
 end function
 
 
-Function TableIsOpen(byval Name as string) as logical
+Function TableIsOpen#MODELE#(byval Name as string) as logical
 Dim i as integer
 
    for i = 1 to NumTables()
       if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)        End If
       if TableInfo(i, TAB_INFO_NAME) = Name then
-            TableIsOpen = true
+            TableIsOpen#MODELE# = true
             Exit Function
       End If
    Next
-   TableIsOpen = false
+   TableIsOpen#MODELE# = false
 
    if Debug then Print "Таблица " + Name + " не открыта."        End If
 End Function
 
 
-function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+function isEqualTableStructure#MODELE#(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
 Dim iColChekingTable, iColBaseTable as integer
 
    redim isEqualCol(TableInfo(tableBase, TAB_INFO_NCOLS))
@@ -137,10 +139,10 @@ Dim iColChekingTable, iColBaseTable as integer
       Next
    next
 
-   isEqualTableStructure = true
+   isEqualTableStructure#MODELE# = true
    for iColBaseTable = 1 to UBound(isEqualCol)
       if isEqualCol(iColBaseTable) = false then
-         isEqualTableStructure = false
+         isEqualTableStructure#MODELE# = false
          'exit function
          if Debug then Print "Поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " в таблице " + tableBase + " нет." end if
       End If
@@ -148,17 +150,17 @@ Dim iColChekingTable, iColBaseTable as integer
 end function
 
 
-Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
+Function ColNumber#MODELE#(byval Num as integer, byval Name as string, ColList() as string) as integer
 dim iCol as integer
    ' note "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList))
    if Num > 0 then
       for iCol = 1 to UBound(ColList)
          if ColList(iCol) = Name then
-            ColNumber = iCol
+            ColNumber#MODELE# = iCol
             Exit Function
          end if
       next
    Else
-      ColNumber = 0
+      ColNumber#MODELE# = 0
    end if
 end function

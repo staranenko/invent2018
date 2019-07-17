@@ -1,6 +1,5 @@
 Include "MapBasic.def"
 Include "DialogNearAreas.def"
-Include "TableMenhode.def"
 
 'Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
 'Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
@@ -37,8 +36,8 @@ Declare Sub SaveIniNear
 Declare Sub GetDialogElementsNear
 Declare Sub SetDialogElementsNear
 
-' Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
-' Declare function getColNumber(byval table as string, byval colName as string) as integer
+declare Sub SelectTableNear(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+declare function getColNumberNear(byval table as string, byval colName as string) as integer
 
 Declare function SelectProjectionNear(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
 Declare Sub GetAndSetCoordSysNear(byval TableName as string, byval setType as string)
@@ -123,7 +122,7 @@ Sub DNA_SourceTableList_OnClick
    If UBound(DNA_SourceTableList_saLayers) > 0 Then
       DNA_SourceTableList_sTableName = DNA_SourceTableList_saLayers(ReadControlValue(DNA_SourceTableList))
       'print "DNA_SourceTableList_sTableName ="+DNA_SourceTableList_sTableName
-      Call SelectTable(DNA_SourceTableList_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
+      Call SelectTableNear(DNA_SourceTableList_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
       Alter Control DNA_SourceTableFieldsList Title From Variable FullColumnsInfo_1
       Alter Control DNA_SourceTableFieldsList Enable
    End If
@@ -134,7 +133,7 @@ Sub DNA_ResultTableList_OnClick
    If UBound(DNA_ResultTableList_saLayers) > 0 Then
       DNA_ResultTableList_sTableName = DNA_ResultTableList_saLayers(ReadControlValue(DNA_ResultTableList))
       'print "DNA_ResultTableList_sTableName ="+DNA_ResultTableList_sTableName
-      Call SelectTable(DNA_ResultTableList_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
+      Call SelectTableNear(DNA_ResultTableList_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
       Alter Control DNA_ResultTableFieldsList Title From Variable FullColumnsInfo_2
       Alter Control DNA_ResultTableFieldsList Enable
    End If
@@ -428,3 +427,63 @@ Function WhatSystemOfCoordinatesWindowNear (byval WindowName as integer) as stri
             Note "Для определения системы координат окна карты, требуется ОКНО КАРТЫ!"
          end If
 End Function
+
+
+Sub SelectTableNear(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+     Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
+     Dim SpaceString As String
+         ReDim FullColumnsInfo(0)
+         ReDim TableColumns(0)
+         ReDim TypeColumns(0)
+         For i_counter = 1 to NumCols(TableName)
+             ReDim TableColumns(UBound(TableColumns)+1)
+             ReDim TypeColumns(UBound(TypeColumns)+1)
+             TableColumns(i_counter) = ColumnInfo(TableName,"COL"+i_counter,COL_INFO_NAME)
+             Do Case  ColumnInfo(TableName,"COL"+i_counter,COL_INFO_TYPE)
+                      Case COL_TYPE_CHAR
+                           TypeColumns(i_counter) = "Символьный"
+                      Case COL_TYPE_DECIMAL
+                           TypeColumns(i_counter) = "Десятичный"
+                      Case COL_TYPE_FLOAT
+                           TypeColumns(i_counter) = "Вещественный"
+                      Case COL_TYPE_INTEGER
+                           TypeColumns(i_counter) = "Целочисленный (4 байт)"
+                      Case COL_TYPE_SMALLINT
+                           TypeColumns(i_counter) = "Короткое целое число (2 байт)"
+                      Case COL_TYPE_DATE
+                           TypeColumns(i_counter) = "Дата"
+                      Case COL_TYPE_LOGICAL
+                           TypeColumns(i_counter) = "Логический"
+                      Case COL_TYPE_GRAPHIC
+                           TypeColumns(i_counter) = "Специальный тип колонки (Obj)"
+                      Case Else
+                           Note "Ошибка чтения таблицы " + TableName
+                           Exit Sub
+             End Case
+         Next
+         For i_counter = 1 to NumCols(TableName) - 1
+             i_MaxLen = Maximum(Len(TableColumns(i_counter)),Len(TableColumns(i_counter + 1)))
+             MaxLen = Maximum(MaxLen,i_MaxLen)
+         Next
+         For i_counter = 1 to NumCols(TableName)
+             ReDim FullColumnsInfo(UBound(FullColumnsInfo)+1)
+             SpaceString = ""
+             For j_counter = 1 to Fix((MaxLen - Len(TableColumns(i_counter)))*1.8)
+                 SpaceString = SpaceString + " "
+             Next
+             FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
+         Next
+End Sub
+
+
+function getColNumberNear(byval table as string, byval colName as string) as integer
+dim iCol as integer
+
+   for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
+      if UCase$(colName) = UCase$(ColumnInfo(table, "COL"+iCol, COL_INFO_NAME)) then
+         getColNumberNear = iCol
+         Exit function
+      end if
+   next
+
+end function
