@@ -1,23 +1,6 @@
 Include "MAPBASIC.DEF"
 Include "DialogFillUpks.def"
 
-Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
-Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
-
-declare Sub SelectTableUpks(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
-declare function getColNumberUpks(byval table as string, byval colName as string) as integer
-
-Declare Sub LoadIniUpks
-Declare Sub SaveIniUpks
-Declare Sub GetDialogElementsUpks
-Declare Sub SetDialogElementsUpks
-
-Global Debug As logical
-
-Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
-Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
-
-
 'Не редактируйте нижеследующие закомментированные строки!
 '//{$DLG_HANDLERS DialogFillUpks.mb}
 
@@ -42,8 +25,39 @@ Global DialogFillUpksmTableZU_I As Integer
 '//{$END GLOBALS FOR CONTROL DialogFillUpksmTableZU}
 
 
-Sub DialogFillUpks_OnShow
+Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
+Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
 
+declare Sub SelectTableUpks(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+declare function getColNumberUpks(byval table as string, byval colName as string) as integer
+
+Declare Sub LoadIniUpks
+Declare Sub SaveIniUpks
+Declare Sub GetDialogElementsUpks
+Declare Sub SetDialogElementsUpks
+
+' Global Debug As logical
+Define Debug true
+
+Type ListInfo
+   Name as string
+   Num as integer
+End Type
+
+Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
+Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
+
+dim table_zu as string
+dim field_zu_kad_num as ListInfo
+dim field_zu_kod_upks as ListInfo
+dim filed_zu_deviation as ListInfo
+
+dim table_upks as string
+dim field_upks_kad_num as ListInfo
+
+
+Sub DialogFillUpks_OnShow
+   if Debug then Print "------------------------------------------------" end if
 '//{$BEGIN INIT CODE FOR CONTROL DialogFillUpksTableUpks}
    ReDim DialogFillUpksTableUpks_saLayers(0)
    DialogFillUpksTableUpks_WinID = FrontWindow()
@@ -98,7 +112,7 @@ End Sub
 
 
 Sub DialogFillUpksbtnOK_OnClick
-
+   Call GetDialogElementsUpks
 End Sub
 
 
@@ -156,45 +170,29 @@ End Sub
 Sub GetDialogElementsUpks
    ' Debug = ReadControlValue(CheckBoxDebug)
 
-   ' TablePhotogrametry.Num = ReadControlValue(myTablesComboBox2)
-   ' TablePhotogrametry.Name = myTablesComboBox2_saLayers(TablePhotogrametry.Num)
-   ' TableOrthophoto.Num = ReadControlValue(myTablesComboBox1)
-   ' TableOrthophoto.Name = myTablesComboBox1_saLayers(TableOrthophoto.Num)
-   ' TableKadastr.Num = ReadControlValue(myTablesBox_Kadastr)
-   ' TableKadastr.Name = myTablesBox_Kadastr_saLayers(TableKadastr.Num)
+   table_zu = DialogFillUpksmTableZU_sTableName
+   field_zu_kad_num.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuNumKvartal))
+   field_zu_kad_num.Num = ReadControlValue(DialogFillUpksPmZuNumKvartal)
+   field_zu_kod_upks.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuKodUpks))
+   field_zu_kod_upks.Num = ReadControlValue(DialogFillUpksPmZuKodUpks)
+   filed_zu_deviation.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuDeviation))
+   filed_zu_deviation.Num = ReadControlValue(DialogFillUpksPmZuDeviation)
 
-   ' KadNumberCol.Num = ReadControlValue(PopupMenu1)
-   ' KadNumberCol.Name = TableColumns_1(KadNumberCol.Num)
-   ' InfringementCol.Num = ReadControlValue(PopupMenu2)
-   ' InfringementCol.Name = TableColumns_1(InfringementCol.Num)
-   ' KadNumberColInKadastr.Num = ReadControlValue(PopupMenu_Kadastr_KadNum)
-   ' KadNumberColInKadastr.Name = TableColumns_2(KadNumberColInKadastr.Num)
 
-   ' Tolerance = val(ReadControlValue(EditTextTolerance))
+   table_upks = DialogFillUpksTableUpks_sTableName
+   field_upks_kad_num.Name = TableColumns_2(ReadControlValue(DialogFillUpksPmUpksNum))
+   field_upks_kad_num.Num = ReadControlValue(DialogFillUpksPmUpksNum)
 
-   ' if (TablePhotogrametry.Num > 0  and Not TableIsOpen(TablePhotogrametry.Name)) then
-   '    isSelectionObject = true
-   ' else
-   '    isSelectionObject = false
-   ' End If
 
-   ' EraseByKadastr = ReadControlValue(Dialog1CBoxEraseKadastr)
+   if Debug Then
+      Print "table_zu: " + table_zu
+      Print "field_zu_kad_num: " + field_zu_kad_num
+      Print "field_zu_kod_upks: " + field_zu_kod_upks
+      Print "filed_zu_deviation: " + filed_zu_deviation
 
-   ' if Debug Then
-   '    Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
-   '    Print "TablePhotogrametry.Name: " + TablePhotogrametry.Name
-   '    Print "TableOrthophoto.Num: " + str$(TableOrthophoto.Num)
-   '    Print "TableOrthophoto.Name: " + TableOrthophoto.Name
-   '    Print "KadNumberCol.Num: " + str$(KadNumberCol.Num)
-   '    Print "KadNumberCol.Name: " + KadNumberCol.Name
-   '    Print "InfringementCol.Num: " + str$(InfringementCol.Num)
-   '    Print "InfringementCol.Name: " + InfringementCol.Name
-   '    Print "TableKadastr.Num: " + str$(TableKadastr.Num)
-   '    Print "TableKadastr.Name: " + TableKadastr.Name
-
-   '    Print "Tolerance: " + str$(Tolerance)
-   '    Print "EraseByKadastr: " + str$(EraseByKadastr)
-   ' End if
+      Print "table_upks: " + table_upks
+      Print "field_upks_kad_num: " + field_upks_kad_num
+   End if
 End Sub
 
 
