@@ -6,26 +6,26 @@ Sub DialogFillUpks_Execute
 
 Dialog
  Title "Заполнение УПКС - v0.1"
- Width 307 Height 206
+ Width 307 Height 230
  Calling DialogFillUpks_OnShow
 '//{$Controls}
    Control OKButton
      ID DialogFillUpksbtnOK
      Title "OK"
-     Position 195, 185
+     Position 195, 208
      Width 50 Height 15
      Calling DialogFillUpksbtnOK_OnClick
 '//{$Control End}
    Control CancelButton
      ID DialogFillUpksbtnCancel
      Title "Отмена"
-     Position 252, 185
+     Position 252, 208
      Width 50 Height 15
      Calling DialogFillUpksbtnCancel_OnClick
 '//{$Control End}
    Control GroupBox
      Position 5, 4
-     Width 297 Height 102
+     Width 297 Height 122
      ID DialogFillUpksGroupBox1
      Title "Земельные участки"
 '//{$Control End}
@@ -40,7 +40,7 @@ Dialog
    Control PopupMenu
      ID DialogFillUpksPmZuKodUpks
      Title ""
-     Position 91, 62
+     Position 91, 83
      Width 202 Height 13
      Value 0
      Calling DialogFillUpksPmZuKodUpks_OnClick
@@ -61,8 +61,8 @@ Dialog
 '//{$Control End}
    Control StaticText
      ID DialogFillUpksStaticText2
-     Title "Поле кода УПКС"
-     Position 12, 65
+     Title "Поле кода УПКС*"
+     Position 12, 86
      Width 66 Height 8
 '//{$Control End}
    Control StaticText
@@ -72,7 +72,7 @@ Dialog
      Width 73 Height 8
 '//{$Control End}
    Control GroupBox
-     Position 5, 110
+     Position 5, 134
      Width 297 Height 59
      ID DialogFillUpksGroupBox2
      Title "Коэффициенты УПКС"
@@ -80,19 +80,19 @@ Dialog
    Control StaticText
      ID DialogFillUpksStaticText4
      Title "Таблица"
-     Position 12, 128
+     Position 12, 151
      Width 36 Height 8
 '//{$Control End}
    Control StaticText
      ID DialogFillUpksStaticText5
      Title "Поле кад. квартала"
-     Position 12, 150
+     Position 12, 173
      Width 73 Height 8
 '//{$Control End}
    Control PopupMenu
      ID DialogFillUpksTableUpks
      Title ""
-     Position 61, 126
+     Position 61, 149
      Width 232 Height 13
      Value 0
      Calling DialogFillUpksTableUpks_OnClick
@@ -100,21 +100,21 @@ Dialog
    Control PopupMenu
      ID DialogFillUpksPmUpksNum
      Title ""
-     Position 91, 147
+     Position 91, 170
      Width 202 Height 13
      Value 0
      Calling DialogFillUpksPmUpksNum_OnClick
 '//{$Control End}
    Control StaticText
      ID DialogFillUpksStaticText6
-     Title "Поле отклонения"
-     Position 12, 86
+     Title "Поле отклонения*"
+     Position 12, 108
      Width 68 Height 8
 '//{$Control End}
    Control PopupMenu
      ID DialogFillUpksPmZuDeviation
      Title ""
-     Position 91, 83
+     Position 91, 105
      Width 202 Height 13
      Value 0
      Calling DialogFillUpksPmZuDeviation_OnClick
@@ -122,13 +122,27 @@ Dialog
    Control StaticText
      ID DialogFillUpksStaticText7
      Title "__________________________________________________________________________________"
-     Position 3, 171
+     Position 3, 194
      Width 301 Height 8
+'//{$Control End}
+   Control StaticText
+     ID DialogFillUpksStaticText8
+     Title "Поле значения УПКС"
+     Position 12, 65
+     Width 77 Height 8
+'//{$Control End}
+   Control PopupMenu
+     ID DialogFillUpksPmZuValueUpks
+     Title ""
+     Position 91, 62
+     Width 202 Height 13
+     Value 0
+     Calling DialogFillUpksPmZuValueUpks_OnClick
 '//{$Control End}
 
 If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
    call DialogFillUpks_OnOKModalResult
-Else
+Else 
    call DialogFillUpks_OnCancelModalResult
 End If
 

@@ -19,6 +19,8 @@ Define   DialogFillUpksPmUpksNum   14
 Define   DialogFillUpksStaticText6   15
 Define   DialogFillUpksPmZuDeviation   16
 Define   DialogFillUpksStaticText7   17
+Define   DialogFillUpksStaticText8   18
+Define   DialogFillUpksPmZuValueUpks   19
 
 '//Dialog DialogFillUpks Handlers Declaration
 Declare Sub DialogFillUpks_Execute
@@ -35,3 +37,4 @@ Declare Sub DialogFillUpksPmZuNumKvartal_OnClick
 Declare Sub DialogFillUpksTableUpks_OnClick
 Declare Sub DialogFillUpksPmUpksNum_OnClick
 Declare Sub DialogFillUpksPmZuDeviation_OnClick
+Declare Sub DialogFillUpksPmZuValueUpks_OnClick

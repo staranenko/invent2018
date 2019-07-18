@@ -36,6 +36,8 @@ Declare Sub SaveIniUpks
 Declare Sub GetDialogElementsUpks
 Declare Sub SetDialogElementsUpks
 
+Declare Sub MainThreadUpks
+
 ' Global Debug As logical
 Define Debug true
 
@@ -44,16 +46,29 @@ Type ListInfo
    Num as integer
 End Type
 
+Type KoeffInfo
+   info as ListInfo
+   value as float
+   difference as float
+End Type
+
+Declare Function FillKoeff(byval knum as string, kf() as KoeffInfo) as logical
+Declare function getMinDifferenceNum(byval vUpks as float, kf() as KoeffInfo) as integer
+
+
 Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
 Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
 
 dim table_zu as string
 dim field_zu_kad_num as ListInfo
+dim field_zu_value_upks as ListInfo
 dim field_zu_kod_upks as ListInfo
 dim filed_zu_deviation as ListInfo
 
 dim table_upks as string
 dim field_upks_kad_num as ListInfo
+
+dim next_row as integer
 
 
 Sub DialogFillUpks_OnShow
@@ -112,8 +127,112 @@ End Sub
 
 
 Sub DialogFillUpksbtnOK_OnClick
+   dim MsgString as string
+
    Call GetDialogElementsUpks
+   Call SaveIniUpks
+
+   MsgString = "Расчет УПКС..."
+
+   select * from table_zu into work_table noselect
+
+   next_row = 1
+
+   ProgressBar MsgString Calling MainThreadUpks Range TableInfo(work_table, TAB_INFO_NROWS)
+   If CommandInfo(CMD_INFO_STATUS) Then
+      if TableInfo(work_table, TAB_INFO_NROWS) > 20 then
+         Note "Расчет завершен! Спасибо за терпение."
+      end If
+   Else
+      Note "Операция прервана."
+      dialog preserve
+      ' Goto end_sub
+   End If
+
+   close table work_table
 End Sub
+
+
+Sub MainThreadUpks
+   dim iFor, iRow as integer
+   dim start_time as float
+   dim kad_num as string
+   dim value_upks as float
+   dim koeff() as KoeffInfo
+   dim minDifferenceNum as integer
+
+   start_time = Timer()
+
+   iRow = next_row
+
+   Fetch Rec next_row From work_table
+   Do While Not EOT(work_table) And Timer( ) - start_time < 2
+      if Debug then print "String " + str$(next_row) + " = " + str$(iRow) end If
+
+      select * from work_table where rowid = iRow into work_one_row noselect
+      kad_num = work_one_row.COL(field_zu_kad_num.Num)
+      value_upks = work_one_row.COL(field_zu_value_upks.Num)
+      if Debug then print "   " + field_zu_kad_num.Name + "=" + kad_num + " : " + str$(value_upks) end If
+
+      ReDim koeff(0)
+      if FillKoeff(kad_num, koeff) then
+         if Debug then 
+            for iFor = 1 to 16
+               Print "   Name " + koeff(iFor).info.Name + ", Num " + koeff(iFor).info.Num + ", Value  " + koeff(iFor).value
+            next
+         end if
+
+         minDifferenceNum = getMinDifferenceNum(value_upks, koeff)
+
+         if Debug then
+            Print "DiffVal = " + str$(koeff(minDifferenceNum).difference) + ", DiffNum = " + str$(minDifferenceNum) + ", UPKS = " + str$(koeff(minDifferenceNum).value)
+         end if 
+
+         update work_one_row set "COL"+field_zu_kod_upks.Num = minDifferenceNum, "COL"+filed_zu_deviation.Num = koeff(minDifferenceNum).difference
+
+      end if 
+
+      Fetch Next From work_table
+      iRow = iRow + 1
+      next_row = next_row + 1
+      close table work_one_row
+   Loop
+
+   If next_row > TableInfo(work_table, TAB_INFO_NROWS) Then
+      ProgressBar = -1 ' сообщить "Готово!"
+   Else
+      ProgressBar = next_row ' сообщить "Прервано."
+   End If
+End Sub
+
+
+Function FillKoeff(byval knum as string, kf() as KoeffInfo) as logical
+   dim colNum, i as integer
+
+   select * from table_upks into tmp_row noselect
+   select * from tmp_row where tmp_row.COL(field_upks_kad_num.Num) = knum into knum_row noselect
+   if Debug then Print "   finding " + knum + " in " + table_upks + " / " + field_upks_kad_num.Name end if
+   if TableInfo(knum_row, TAB_INFO_NROWS) > 0 then
+      ReDim kf(16)
+
+      for i = 1 to 15
+         kf(i).info.Name = "_" + str$(i)
+         kf(i).info.Num = i
+         colNum = getColNumberUpks(knum_row, kf(i).info.Name)
+         kf(i).value = knum_row.COL(colNum)
+      next
+      kf(16).info.Name = "_" + str$(16)
+      kf(16).info.Num = 16
+      kf(16).value = 1
+
+      FillKoeff = true
+   Else
+      FillKoeff = false
+   end if 
+   if Debug then Print "   - find " + str$(TableInfo(knum_row, TAB_INFO_NROWS)) end if
+   close table tmp_row
+   close table knum_row
+End function
 
 
 Sub DialogFillUpksbtnCancel_OnClick
@@ -128,6 +247,8 @@ Sub DialogFillUpksmTableZU_OnClick
       Call SelectTableUpks(DialogFillUpksmTableZU_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
       Alter Control DialogFillUpksPmZuNumKvartal Title From Variable FullColumnsInfo_1
       Alter Control DialogFillUpksPmZuNumKvartal Enable
+      Alter Control DialogFillUpksPmZuValueUpks Title From Variable FullColumnsInfo_1
+      Alter Control DialogFillUpksPmZuValueUpks Enable
       Alter Control DialogFillUpksPmZuKodUpks Title From Variable FullColumnsInfo_1
       Alter Control DialogFillUpksPmZuKodUpks Enable
       Alter Control DialogFillUpksPmZuDeviation Title From Variable FullColumnsInfo_1
@@ -173,6 +294,8 @@ Sub GetDialogElementsUpks
    table_zu = DialogFillUpksmTableZU_sTableName
    field_zu_kad_num.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuNumKvartal))
    field_zu_kad_num.Num = ReadControlValue(DialogFillUpksPmZuNumKvartal)
+   field_zu_value_upks.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuValueUpks))
+   field_zu_value_upks.Num = ReadControlValue(DialogFillUpksPmZuValueUpks)
    field_zu_kod_upks.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuKodUpks))
    field_zu_kod_upks.Num = ReadControlValue(DialogFillUpksPmZuKodUpks)
    filed_zu_deviation.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuDeviation))
@@ -186,12 +309,13 @@ Sub GetDialogElementsUpks
 
    if Debug Then
       Print "table_zu: " + table_zu
-      Print "field_zu_kad_num: " + field_zu_kad_num
-      Print "field_zu_kod_upks: " + field_zu_kod_upks
-      Print "filed_zu_deviation: " + filed_zu_deviation
+      Print "field_zu_kad_num: " + field_zu_kad_num.Name
+      Print "field_zu_value_upks: " + field_zu_value_upks.Name
+      Print "field_zu_kod_upks: " + field_zu_kod_upks.Name
+      Print "filed_zu_deviation: " + filed_zu_deviation.Name
 
       Print "table_upks: " + table_upks
-      Print "field_upks_kad_num: " + field_upks_kad_num
+      Print "field_upks_kad_num: " + field_upks_kad_num.Name
    End if
 End Sub
 
@@ -200,6 +324,7 @@ Sub SetDialogElementsUpks
    Dim iTable, ColNum as integer
 
    Alter Control DialogFillUpksPmZuNumKvartal Disable
+   Alter Control DialogFillUpksPmZuValueUpks Disable
    Alter Control DialogFillUpksPmZuKodUpks Disable
    Alter Control DialogFillUpksPmZuDeviation Disable
 
@@ -424,4 +549,35 @@ dim iCol as integer
       end if
    next
 
+end function
+
+Sub DialogFillUpksPmZuValueUpks_OnClick
+
+End Sub
+
+
+function getMinDifferenceNum(byval vUpks as float, kf() as KoeffInfo) as integer
+   dim iFor as integer
+   dim minDiffNum as integer
+   dim minDiffVal as float
+
+   if UBound(kf) = 0 then
+      getMinDifferenceNum = -1
+      exit function
+   end if
+
+   minDiffNum = -1
+   minDiffVal = 0
+   for iFor = 1 to UBound(kf)
+      kf(iFor).difference = Abs(vUpks - kf(iFor).value)
+      if iFor = 1 then
+         minDiffVal = kf(iFor).difference
+      end if
+      if kf(iFor).difference <= minDiffVal then
+         minDiffVal = kf(iFor).difference
+         minDiffNum = iFor
+      end if
+   Next
+
+   getMinDifferenceNum = minDiffNum
 end function
