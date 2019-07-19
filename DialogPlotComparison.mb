@@ -97,14 +97,6 @@ Dialog
      Position 12, 184
      Width 109 Height 8
 '//{$Control End}
-   Control CheckBox
-     ID CheckBoxDebug
-     Title "Отладка"
-     Position 311, 217
-     Width 45 Height 8
-     Value 1
-     Calling CheckBoxDebug_OnClick
-'//{$Control End}
    Control GroupBox
      Position 5, 52
      Width 372 Height 73

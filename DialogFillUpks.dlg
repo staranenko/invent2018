@@ -1,5 +1,5 @@
 Dialog
- Title "Заполнение УПКС - v0.1"
+ Title "Заполнение УПКС - v1.0"
  Width 477 Height 412
  Position 757, 189
  Calling DialogFillUpks_OnShow

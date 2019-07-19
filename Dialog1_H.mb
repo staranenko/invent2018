@@ -1,18 +1,18 @@
-Include "DialogFillUpks.def"
+Include "DialogSettings.def"
 
 'Не редактируйте нижеследующие закомментированные строки!
-'//{$DLG_HANDLERS DialogFillUpks.mb}
+'//{$DLG_HANDLERS DialogSettings.mb}
 
 
-Sub DialogFillUpks_OnShow
-
-End Sub
-
-Sub DialogFillUpks_OnOKModalResult
+Sub DialogSettings_OnShow
 
 End Sub
 
-Sub DialogFillUpks_OnCancelModalResult
+Sub DialogSettings_OnOKModalResult
+
+End Sub
+
+Sub DialogSettings_OnCancelModalResult
 
 End Sub
 

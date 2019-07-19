@@ -1,3 +1,4 @@
+Include "DialogSettings.def"
 Include "DialogFillUpks.def"
 Include "DialogNearAreas.def"
 Include "DialogPlotComparison.def"
@@ -40,4 +41,8 @@ End Sub
 
 Sub MenuItemFillUpks_OnClick
     Call DialogFillUpks_Execute
+End Sub
+
+Sub MenuItemSettings_OnClick
+    Call DialogSettings_Execute
 End Sub

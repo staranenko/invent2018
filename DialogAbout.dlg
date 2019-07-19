@@ -1,5 +1,5 @@
 Dialog
- Title "О программе Инвентаризация 2018"
+ Title "О программе Инвентаризация 2018-2019"
  Width 396 Height 236
  Position 1168, 137
  Calling DialogAbout_OnShow

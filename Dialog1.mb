@@ -1,13 +1,13 @@
 'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
-'//{$DLG DialogFillUpks}
+'//{$DLG DialogSettings}
 Include "MapBasic.def"
 Include "Dialog1.def"
-Sub DialogFillUpks_Execute
+Sub DialogSettings_Execute
 
 Dialog
- Title "Заполнение УПКС"
+ Title "Новый диалог"
  Width 256 Height 191
- Calling DialogFillUpks_OnShow
+ Calling DialogSettings_OnShow
 '//{$Controls}
    Control OKButton
      ID Dialog1btnOK
@@ -25,9 +25,9 @@ Dialog
 '//{$Control End}
 
 If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
-   call DialogFillUpks_OnOKModalResult
+   call DialogSettings_OnOKModalResult
 Else 
-   call DialogFillUpks_OnCancelModalResult
+   call DialogSettings_OnCancelModalResult
 End If
 
 End Sub

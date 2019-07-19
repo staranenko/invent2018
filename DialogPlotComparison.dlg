@@ -95,14 +95,6 @@ Component=1
      Position 18, 299
      Width 163 Height 13
 '//{$Control End}
-   Control CheckBox
-     ID CheckBoxDebug
-     Title "Отладка"
-     Position 467, 352
-     Width 67 Height 13
-     Value 1
-     Calling CheckBoxDebug_OnClick
-'//{$Control End}
    Control GroupBox
      Position 8, 84
      Width 558 Height 119

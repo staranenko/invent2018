@@ -15,18 +15,17 @@ Define   StaticText3   10
 Define   StaticText4   11
 Define   StaticText5   12
 Define   StaticText6   13
-Define   CheckBoxDebug   14
-Define   GroupBox1   15
-Define   GroupBox2   16
-Define   StaticText7   17
-Define   GroupBox3   18
-Define   StaticText9   19
-Define   StaticText10   20
-Define   PopupMenu_Kadastr_KadNum   21
-Define   myTablesBox_Kadastr   22
-Define   Dialog1btnEraseOnly   23
-Define   Dialog1CBoxEraseKadastr   24
-Define   Dialog1btnTestKadNumber   25
+Define   GroupBox1   14
+Define   GroupBox2   15
+Define   StaticText7   16
+Define   GroupBox3   17
+Define   StaticText9   18
+Define   StaticText10   19
+Define   PopupMenu_Kadastr_KadNum   20
+Define   myTablesBox_Kadastr   21
+Define   Dialog1btnEraseOnly   22
+Define   Dialog1CBoxEraseKadastr   23
+Define   Dialog1btnTestKadNumber   24
 
 '//Dialog DialogPlotComparison Handlers Declaration
 Declare Sub DialogPlotComparison_Execute
@@ -41,7 +40,6 @@ Declare Sub myTablesComboBox1_OnClick
 Declare Sub myTablesComboBox2_OnClick
 Declare Sub PopupMenu1_OnClick
 Declare Sub PopupMenu2_OnClick
-Declare Sub CheckBoxDebug_OnClick
 Declare Sub PopupMenu_Kadastr_KadNum_OnClick
 Declare Sub myTablesBox_Kadastr_OnClick
 Declare Sub Dialog1btnEraseOnly_OnClick

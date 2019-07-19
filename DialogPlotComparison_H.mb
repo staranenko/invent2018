@@ -560,7 +560,7 @@ End Sub
 
 
 Sub GetDialogElements
-   Debug = ReadControlValue(CheckBoxDebug)
+   ' Debug = ReadControlValue(CheckBoxDebug)
 
    TablePhotogrametry.Num = ReadControlValue(myTablesComboBox2)
    TablePhotogrametry.Name = myTablesComboBox2_saLayers(TablePhotogrametry.Num)
@@ -607,7 +607,7 @@ End Sub
 Sub SetDialogElements
    Dim iTable, ColNum as integer
 
-   Alter Control CheckBoxDebug Value Debug
+   ' Alter Control CheckBoxDebug Value Debug
    ALter Control EditTextTolerance Value str$(Tolerance)
    Alter Control Dialog1CBoxEraseKadastr Value EraseByKadastr
 
@@ -850,10 +850,6 @@ Sub PopupMenu2_OnClick
 
 End Sub
 
-
-Sub CheckBoxDebug_OnClick
-
-End Sub
 
 
 Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)

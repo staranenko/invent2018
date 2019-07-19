@@ -5,7 +5,7 @@ Include "DialogFillUpks.def"
 Sub DialogFillUpks_Execute
 
 Dialog
- Title "Заполнение УПКС - v0.1"
+ Title "Заполнение УПКС - v1.0"
  Width 307 Height 230
  Calling DialogFillUpks_OnShow
 '//{$Controls}

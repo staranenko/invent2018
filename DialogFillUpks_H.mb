@@ -30,6 +30,7 @@ Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal
 
 declare Sub SelectTableUpks(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
 declare function getColNumberUpks(byval table as string, byval colName as string) as integer
+declare Function ColNumberUpks(byval Num as integer, byval Name as string, ColList() as string) as integer
 
 Declare Sub LoadIniUpks
 Declare Sub SaveIniUpks
@@ -38,15 +39,16 @@ Declare Sub SetDialogElementsUpks
 
 Declare Sub MainThreadUpks
 
-' Global Debug As logical
-Define Debug true
+Global Debug As logical
 
 Type ListInfo
    Name as string
    Num as integer
+   FieldNum as integer
 End Type
 
 Type KoeffInfo
+   knum as string
    info as ListInfo
    value as float
    difference as float
@@ -70,9 +72,13 @@ dim field_upks_kad_num as ListInfo
 
 dim next_row as integer
 
+dim koeff(16) as KoeffInfo
 
 Sub DialogFillUpks_OnShow
+   Call LoadIniUpks
+
    if Debug then Print "------------------------------------------------" end if
+
 '//{$BEGIN INIT CODE FOR CONTROL DialogFillUpksTableUpks}
    ReDim DialogFillUpksTableUpks_saLayers(0)
    DialogFillUpksTableUpks_WinID = FrontWindow()
@@ -109,9 +115,9 @@ Sub DialogFillUpks_OnShow
    End If
 '//{$END INIT CODE FOR CONTROL DialogFillUpksmTableZU}
 
-   Call SetDialogElementsUpks
    Call DialogFillUpksmTableZU_OnClick
    Call DialogFillUpksTableUpks_OnClick
+   Call SetDialogElementsUpks
 
 End Sub
 
@@ -136,6 +142,8 @@ Sub DialogFillUpksbtnOK_OnClick
 
    select * from table_zu into work_table noselect
 
+   select * from table_upks into tmp_rows_upks noselect
+
    next_row = 1
 
    ProgressBar MsgString Calling MainThreadUpks Range TableInfo(work_table, TAB_INFO_NROWS)
@@ -150,6 +158,7 @@ Sub DialogFillUpksbtnOK_OnClick
    End If
 
    close table work_table
+   close table tmp_rows_upks
 End Sub
 
 
@@ -158,7 +167,6 @@ Sub MainThreadUpks
    dim start_time as float
    dim kad_num as string
    dim value_upks as float
-   dim koeff() as KoeffInfo
    dim minDifferenceNum as integer
 
    start_time = Timer()
@@ -174,21 +182,28 @@ Sub MainThreadUpks
       value_upks = work_one_row.COL(field_zu_value_upks.Num)
       if Debug then print "   " + field_zu_kad_num.Name + "=" + kad_num + " : " + str$(value_upks) end If
 
-      ReDim koeff(0)
       if FillKoeff(kad_num, koeff) then
-         if Debug then 
-            for iFor = 1 to 16
-               Print "   Name " + koeff(iFor).info.Name + ", Num " + koeff(iFor).info.Num + ", Value  " + koeff(iFor).value
-            next
-         end if
+        if Debug then 
+           for iFor = 1 to 16
+              Print "   Name " + koeff(iFor).info.Name + ", Num " + koeff(iFor).info.Num + ", Value  " + koeff(iFor).value
+           next
+        end if
 
-         minDifferenceNum = getMinDifferenceNum(value_upks, koeff)
+        minDifferenceNum = getMinDifferenceNum(value_upks, koeff)
 
-         if Debug then
-            Print "DiffVal = " + str$(koeff(minDifferenceNum).difference) + ", DiffNum = " + str$(minDifferenceNum) + ", UPKS = " + str$(koeff(minDifferenceNum).value)
-         end if 
+        if Debug then
+           if minDifferenceNum > 0 then
+              Print "DiffVal = " + str$(koeff(minDifferenceNum).difference) + ", DiffNum = " + str$(minDifferenceNum) + ", UPKS = " + str$(koeff(minDifferenceNum).value)
+           Else
+              Print "   not count"
+           end if 
+        end if 
 
-         update work_one_row set "COL"+field_zu_kod_upks.Num = minDifferenceNum, "COL"+filed_zu_deviation.Num = koeff(minDifferenceNum).difference
+        if minDifferenceNum > 0 then
+           update work_one_row set "COL"+field_zu_kod_upks.Num = minDifferenceNum, "COL"+filed_zu_deviation.Num = koeff(minDifferenceNum).difference
+        Else
+           update work_one_row set "COL"+field_zu_kod_upks.Num = minDifferenceNum
+        end if
 
       end if 
 
@@ -209,18 +224,23 @@ End Sub
 Function FillKoeff(byval knum as string, kf() as KoeffInfo) as logical
    dim colNum, i as integer
 
-   select * from table_upks into tmp_row noselect
-   select * from tmp_row where tmp_row.COL(field_upks_kad_num.Num) = knum into knum_row noselect
-   if Debug then Print "   finding " + knum + " in " + table_upks + " / " + field_upks_kad_num.Name end if
-   if TableInfo(knum_row, TAB_INFO_NROWS) > 0 then
-      ReDim kf(16)
+   select * from tmp_rows_upks where tmp_rows_upks.COL(field_upks_kad_num.Num) = knum into knum_row noselect
 
+   if Debug then Print "   finding " + knum + " in " + table_upks + " / " + field_upks_kad_num.Name end if
+
+   if TableInfo(knum_row, TAB_INFO_NROWS) > 0 then
       for i = 1 to 15
+         kf(i).knum = knum
          kf(i).info.Name = "_" + str$(i)
          kf(i).info.Num = i
-         colNum = getColNumberUpks(knum_row, kf(i).info.Name)
+         if kf(i).info.FieldNum <=0 then
+            colNum = getColNumberUpks(knum_row, kf(i).info.Name)
+         Else
+            colNum = kf(i).info.FieldNum
+         end if
          kf(i).value = knum_row.COL(colNum)
       next
+      kf(16).knum = knum
       kf(16).info.Name = "_" + str$(16)
       kf(16).info.Num = 16
       kf(16).value = 1
@@ -229,8 +249,9 @@ Function FillKoeff(byval knum as string, kf() as KoeffInfo) as logical
    Else
       FillKoeff = false
    end if 
+
    if Debug then Print "   - find " + str$(TableInfo(knum_row, TAB_INFO_NROWS)) end if
-   close table tmp_row
+
    close table knum_row
 End function
 
@@ -289,8 +310,6 @@ End Sub
 
 
 Sub GetDialogElementsUpks
-   ' Debug = ReadControlValue(CheckBoxDebug)
-
    table_zu = DialogFillUpksmTableZU_sTableName
    field_zu_kad_num.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuNumKvartal))
    field_zu_kad_num.Num = ReadControlValue(DialogFillUpksPmZuNumKvartal)
@@ -301,11 +320,9 @@ Sub GetDialogElementsUpks
    filed_zu_deviation.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuDeviation))
    filed_zu_deviation.Num = ReadControlValue(DialogFillUpksPmZuDeviation)
 
-
    table_upks = DialogFillUpksTableUpks_sTableName
    field_upks_kad_num.Name = TableColumns_2(ReadControlValue(DialogFillUpksPmUpksNum))
    field_upks_kad_num.Num = ReadControlValue(DialogFillUpksPmUpksNum)
-
 
    if Debug Then
       Print "table_zu: " + table_zu
@@ -323,50 +340,50 @@ End Sub
 Sub SetDialogElementsUpks
    Dim iTable, ColNum as integer
 
-   Alter Control DialogFillUpksPmZuNumKvartal Disable
-   Alter Control DialogFillUpksPmZuValueUpks Disable
-   Alter Control DialogFillUpksPmZuKodUpks Disable
-   Alter Control DialogFillUpksPmZuDeviation Disable
+   ' Alter Control DialogFillUpksPmZuNumKvartal Disable
+   ' Alter Control DialogFillUpksPmZuValueUpks Disable
+   ' Alter Control DialogFillUpksPmZuKodUpks Disable
+   ' Alter Control DialogFillUpksPmZuDeviation Disable
 
-   Alter Control DialogFillUpksPmUpksNum Disable
+   ' Alter Control DialogFillUpksPmUpksNum Disable
 
-   ' Alter Control CheckBoxDebug Value Debug
-   ' ALter Control EditTextTolerance Value str$(Tolerance)
-   ' Alter Control Dialog1CBoxEraseKadastr Value EraseByKadastr
+   if table_zu <> "" then
+      for iTable = 1 to DialogFillUpksmTableZU_LayerCount
+         if DialogFillUpksmTableZU_saLayers(iTable) = table_zu then
+            Alter Control DialogFillUpksmTableZU Value iTable
+            Call DialogFillUpksmTableZU_OnClick
 
-   ' ' if TablePhotogrametry.Num > 0 then
-   '    for iTable = 1 to myTablesComboBox2_LayerCount
-   '       if myTablesComboBox2_saLayers(iTable) = TablePhotogrametry.Name then
-   '          Alter Control myTablesComboBox2 Value iTable
-   '       end if
-   '    Next
-   ' ' end If
+            if field_zu_kad_num.Num > 0 then
+               Alter Control DialogFillUpksPmZuNumKvartal Value ColNumberUpks(field_zu_kad_num.Num, field_zu_kad_num.Name, TableColumns_1)
+            end if
 
-   ' ' if TableOrthophoto.Num > 0 then
-   '    for iTable = 1 to myTablesComboBox1_LayerCount
-   '       if myTablesComboBox1_saLayers(iTable) = TableOrthophoto.Name then
-   '          Alter Control myTablesComboBox1 Value iTable
-   '          Call myTablesComboBox1_OnClick
+            if field_zu_value_upks.Num > 0 then
+               Alter Control DialogFillUpksPmZuValueUpks Value ColNumberUpks(field_zu_value_upks.Num, field_zu_value_upks.Name, TableColumns_1)
+            end if
 
-   '          Alter Control PopupMenu1 Value ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1)
+            if field_zu_kod_upks.Num > 0 then
+               Alter Control DialogFillUpksPmZuKodUpks Value ColNumberUpks(field_zu_kod_upks.Num, field_zu_kod_upks.Name, TableColumns_1)
+            end if
 
-   '          Alter Control PopupMenu2 Value ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1)
+            if filed_zu_deviation.Num > 0 then
+               Alter Control DialogFillUpksPmZuDeviation Value ColNumberUpks(filed_zu_deviation.Num, filed_zu_deviation.Name, TableColumns_1)
+            end if
+         end if
+      Next
+   end If
 
-   '       end if
-   '    next
-   ' ' end If
+   if table_upks <> "" then
+      for iTable = 1 to DialogFillUpksTableUpks_LayerCount
+         if DialogFillUpksTableUpks_saLayers(iTable) = table_upks then
+            Alter Control DialogFillUpksTableUpks Value iTable
+            Call DialogFillUpksTableUpks_OnClick
 
-   ' ' if TableKadastr.Num > 0 then
-   '    for iTable = 1 to myTablesBox_Kadastr_LayerCount
-   '       if myTablesBox_Kadastr_saLayers(iTable) = TableKadastr.Name then
-   '          ALter Control myTablesBox_Kadastr Value iTable
-   '          call myTablesBox_Kadastr_OnClick
-
-   '          Alter Control PopupMenu_Kadastr_KadNum Value ColNumber(KadNumberColInKadastr.Num, KadNumberColInKadastr.Name, TableColumns_2)
-
-   '       end if
-   '    next
-   ' ' end if
+            if field_upks_kad_num.Num > 0 then
+               Alter Control DialogFillUpksPmUpksNum Value ColNumberUpks(field_upks_kad_num.Num, field_upks_kad_num.Name, TableColumns_2)
+            end if
+         end if
+      Next
+   end If
 End Sub
 
 
@@ -378,83 +395,69 @@ Sub LoadIniUpks
    PachApplicationMBX = ApplicationDirectory$()
    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
 
-   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
-   ' if GetIniKey <> "" Then
-   '     If GetIniKey = "T" Then
-   '        Debug = true
-   '     Else
-   '        Debug = false
-   '     End If
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          Debug = true
+       Else
+          Debug = false
+       End If
+   End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Num","0")
-   ' if GetIniKey <> "" Then
-   '    TablePhotogrametry.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Name","")
-   ' if GetIniKey <> "" Then
-   '    TablePhotogrametry.Name = GetIniKey
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"table_zu","Name","")
+   if GetIniKey <> "" Then
+      table_zu = GetIniKey
+   End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Num","0")
-   ' if GetIniKey <> "" Then
-   '    TableOrthophoto.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Name","")
-   ' if GetIniKey <> "" Then
-   '    TableOrthophoto.Name = GetIniKey
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_kad_num","Num","0")
+   if GetIniKey <> "" Then
+      field_zu_kad_num.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_kad_num","Name","")
+   if GetIniKey <> "" Then
+      field_zu_kad_num.Name = GetIniKey
+   End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Num","0")
-   ' if GetIniKey <> "" Then
-   '    TableKadastr.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Name","")
-   ' if GetIniKey <> "" Then
-   '    TableKadastr.Name = GetIniKey
-   ' end if
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_value_upks","Num","0")
+   if GetIniKey <> "" Then
+      field_zu_value_upks.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_value_upks","Name","")
+   if GetIniKey <> "" Then
+      field_zu_value_upks.Name = GetIniKey
+   end if
 
-   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Num","0")
-   ' if GetIniKey <> "" Then
-   '    KadNumberCol.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Name","")
-   ' if GetIniKey <> "" Then
-   '    KadNumberCol.Name = GetIniKey
-   ' end if
+      GetIniKey = IniReadString(FullINIFileName,"field_zu_kod_upks","Num","0")
+   if GetIniKey <> "" Then
+      field_zu_kod_upks.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_kod_upks","Name","")
+   if GetIniKey <> "" Then
+      field_zu_kod_upks.Name = GetIniKey
+   end if
 
-   ' GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Num","0")
-   ' if GetIniKey <> "" Then
-   '    InfringementCol.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Name","")
-   ' if GetIniKey <> "" Then
-   '    InfringementCol.Name = GetIniKey
-   ' End If
+      GetIniKey = IniReadString(FullINIFileName,"filed_zu_deviation","Num","0")
+   if GetIniKey <> "" Then
+      filed_zu_deviation.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"filed_zu_deviation","Name","")
+   if GetIniKey <> "" Then
+      filed_zu_deviation.Name = GetIniKey
+   end if
 
-   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Num","0")
-   ' if GetIniKey <> "" Then
-   '    KadNumberColInKadastr.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Name","")
-   ' if GetIniKey <> "" Then
-   '    KadNumberColInKadastr.Name = GetIniKey
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"table_upks","Name","")
+   if GetIniKey <> "" Then
+      table_upks = GetIniKey
+   end if
 
-   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","Tolerance","0")
-   ' if GetIniKey <> "" Then
-   '    Tolerance = Val(GetIniKey)
-   ' End If
-
-   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","EraseByKadastr","F")
-   ' if GetIniKey <> "" Then
-   '     If GetIniKey = "T" Then
-   '       EraseByKadastr = true
-   '     Else
-   '       EraseByKadastr = false
-   '     End If
-   ' End If
-
+   GetIniKey = IniReadString(FullINIFileName,"field_upks_kad_num","Num","0")
+   if GetIniKey <> "" Then
+      field_upks_kad_num.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_upks_kad_num","Name","")
+   if GetIniKey <> "" Then
+      field_upks_kad_num.Name = GetIniKey
+   End If
 End Sub
 
 
@@ -466,29 +469,26 @@ Sub SaveIniUpks
     PachApplicationMBX = ApplicationDirectory$()
     FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Num",str$(TablePhotogrametry.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Name",str$(TablePhotogrametry.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"table_zu", "Name",str$(table_zu))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Num",str$(TableOrthophoto.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Name",str$(TableOrthophoto.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_kad_num", "Num",str$(field_zu_kad_num.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_kad_num", "Name",str$(field_zu_kad_num.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Num",str$(TableKadastr.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Name",str$(TableKadastr.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_value_upks", "Num",str$(field_zu_value_upks.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_value_upks", "Name",str$(field_zu_value_upks.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Num",str$(KadNumberCol.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Name",str$(KadNumberCol.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_kod_upks", "Num",str$(field_zu_kod_upks.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_kod_upks", "Name",str$(field_zu_kod_upks.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Num",str$(InfringementCol.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Name",str$(InfringementCol.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"filed_zu_deviation", "Num",str$(filed_zu_deviation.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"filed_zu_deviation", "Name",str$(filed_zu_deviation.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Num",str$(KadNumberColInKadastr.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Name",str$(KadNumberColInKadastr.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"table_upks", "Name",str$(table_upks))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры", "Tolerance",str$(Tolerance))
-
-   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры","EraseByKadastr",str$(EraseByKadastr))
+   SetIniKey = IniWriteString(FullINIFileName,"field_upks_kad_num", "Num",str$(field_upks_kad_num.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_upks_kad_num", "Name",str$(field_upks_kad_num.Name))
 End Sub
 
 
@@ -562,11 +562,11 @@ function getMinDifferenceNum(byval vUpks as float, kf() as KoeffInfo) as integer
    dim minDiffVal as float
 
    if UBound(kf) = 0 then
-      getMinDifferenceNum = -1
+      getMinDifferenceNum = 0
       exit function
    end if
 
-   minDiffNum = -1
+   minDiffNum = 0
    minDiffVal = 0
    for iFor = 1 to UBound(kf)
       kf(iFor).difference = Abs(vUpks - kf(iFor).value)
@@ -580,4 +580,28 @@ function getMinDifferenceNum(byval vUpks as float, kf() as KoeffInfo) as integer
    Next
 
    getMinDifferenceNum = minDiffNum
+end function
+
+
+Function ColNumberUpks(byval Num as integer, byval Name as string, ColList() as string) as integer
+dim iCol as integer
+   if Num > 0 then
+      for iCol = 1 to UBound(ColList)
+         if ColList(iCol) = Name then
+            ColNumberUpks = iCol
+
+            if Debug then 
+               Print "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList)) + ", ColNumber: " + str$(iCol)
+            end if
+
+            Exit Function
+         end if
+      next
+   Else
+      ColNumberUpks = 0
+   end if
+
+   if Debug then 
+      Print "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList)) + ", ColNumber: " + str$(0)
+   end if
 end function
