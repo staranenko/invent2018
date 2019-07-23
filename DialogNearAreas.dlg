@@ -1,41 +1,41 @@
 Dialog
  Title "Удаленность участков - v0.1"
- Width 422 Height 375
- Position 1111, 320
+ Width 505 Height 375
+ Position 603, 271
  Calling DialogNearAreas_OnShow
 CenterDisplay
 '//{$Controls}
    Control OKButton
      ID DNA_btnOK
-     Title "Перенести данные"
-     Position 185, 301
-     Width 128 Height 25
+     Title "Заполнить"
+     Position 318, 301
+     Width 75 Height 25
      Calling DNA_btnOK_OnClick
 '//{$Control End}
    Control CancelButton
      ID DNA_btnCancel
      Title "Отмена"
-     Position 321, 301
+     Position 404, 301
      Width 75 Height 25
      Calling DNA_btnCancel_OnClick
 '//{$Control End}
    Control GroupBox
      Position 8, 6
-     Width 390 Height 93
+     Width 475 Height 93
      ID DNA_GroupBox1
-     Title "Источник данных"
+     Title "Источник адресов"
 '//{$Control End}
    Control GroupBox
      Position 8, 107
-     Width 390 Height 168
+     Width 475 Height 168
      ID DNA_GroupBox2
-     Title "Приемник данных"
+     Title "Приемник адресов"
 '//{$Control End}
    Control PopupMenu
      ID DNA_SourceTableList
      Title ""
      Position 116, 27
-     Width 272 Height 21
+     Width 358 Height 21
      Value 0
      Calling DNA_SourceTableList_OnClick
 Component=1
@@ -44,7 +44,7 @@ Component=1
      ID DNA_ResultTableList
      Title ""
      Position 116, 129
-     Width 272 Height 21
+     Width 358 Height 21
      Value 0
      Calling DNA_ResultTableList_OnClick
 Component=1
@@ -53,7 +53,7 @@ Component=1
      ID DNA_SourceTableFieldsList
      Title ""
      Position 116, 61
-     Width 272 Height 21
+     Width 358 Height 21
      Value 0
      Calling DNA_SourceTableFieldsList_OnClick
 '//{$Control End}
@@ -61,7 +61,7 @@ Component=1
      ID DNA_ResultTableFieldsList
      Title ""
      Position 116, 165
-     Width 273 Height 21
+     Width 358 Height 21
      Value 0
      Calling DNA_ResultTableFieldsList_OnClick
 '//{$Control End}
@@ -69,7 +69,7 @@ Component=1
      ID DNA_StaticText1
      Title "___________________________________________________________________________________________________"
      Position 8, 277
-     Width 391 Height 13
+     Width 478 Height 13
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText2
@@ -80,7 +80,7 @@ Component=1
    Control PopupMenu
      ID DNA_UnitsDistance
      Title "Метры;Километры"
-     Position 249, 202
+     Position 335, 202
      Width 139 Height 21
      Value 1
      Calling DNA_UnitsDistance_OnClick
@@ -94,7 +94,7 @@ Component=1
    Control PopupMenu
      ID DNA_TypeAngle
      Title "Дирекционный угол;Румб"
-     Position 249, 237
+     Position 335, 237
      Width 139 Height 21
      Value 1
      Calling DNA_TypeAngle_OnClick
@@ -107,7 +107,7 @@ Component=1
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText5
-     Title "Поле с данными"
+     Title "Поле с адресом"
      Position 18, 66
      Width 94 Height 13
 '//{$Control End}
@@ -119,19 +119,23 @@ Component=1
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText7
-     Title "Поле для данных"
+     Title "Поле для адреса"
      Position 18, 169
      Width 96 Height 13
 '//{$Control End}
-   Control EditText
-     ID DNA_FieldNameDistance
-     Value "Distance"
-     Position 142, 202
-     Width 104 Height 21
+   Control PopupMenu
+     ID DNA_FieldDistance
+     Title ""
+     Position 144, 202
+     Width 188 Height 21
+     Value 0
+     Calling DNA_FieldDistance_OnClick
 '//{$Control End}
-   Control EditText
-     ID DNA_FieldNameAngle
-     Value "Direction"
-     Position 142, 237
-     Width 104 Height 21
+   Control PopupMenu
+     ID DNA_FieldAngle
+     Title ""
+     Position 144, 237
+     Width 188 Height 21
+     Value 0
+     Calling DNA_FieldAngle_OnClick
 '//{$Control End}

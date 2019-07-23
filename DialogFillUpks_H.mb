@@ -31,6 +31,7 @@ Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal
 declare Sub SelectTableUpks(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
 declare function getColNumberUpks(byval table as string, byval colName as string) as integer
 declare Function ColNumberUpks(byval Num as integer, byval Name as string, ColList() as string) as integer
+declare Function TableIsOpenUpks(byval Name as string) as logical
 
 Declare Sub LoadIniUpks
 Declare Sub SaveIniUpks
@@ -354,19 +355,31 @@ Sub SetDialogElementsUpks
             Call DialogFillUpksmTableZU_OnClick
 
             if field_zu_kad_num.Num > 0 then
-               Alter Control DialogFillUpksPmZuNumKvartal Value ColNumberUpks(field_zu_kad_num.Num, field_zu_kad_num.Name, TableColumns_1)
+               ColNum = ColNumberUpks(field_zu_kad_num.Num, field_zu_kad_num.Name, TableColumns_1)
+               if TableIsOpenUpks(table_zu) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_zu, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmZuNumKvartal Value ColNum end if
+               end if 
             end if
 
             if field_zu_value_upks.Num > 0 then
-               Alter Control DialogFillUpksPmZuValueUpks Value ColNumberUpks(field_zu_value_upks.Num, field_zu_value_upks.Name, TableColumns_1)
+               ColNum = ColNumberUpks(field_zu_value_upks.Num, field_zu_value_upks.Name, TableColumns_1)
+               if TableIsOpenUpks(table_zu) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_zu, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmZuValueUpks Value ColNum end if
+               end if
             end if
 
             if field_zu_kod_upks.Num > 0 then
-               Alter Control DialogFillUpksPmZuKodUpks Value ColNumberUpks(field_zu_kod_upks.Num, field_zu_kod_upks.Name, TableColumns_1)
+               ColNum = ColNumberUpks(field_zu_kod_upks.Num, field_zu_kod_upks.Name, TableColumns_1)
+               if TableIsOpenUpks(table_zu) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_zu, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmZuKodUpks Value ColNum end if
+               end if
             end if
 
             if filed_zu_deviation.Num > 0 then
-               Alter Control DialogFillUpksPmZuDeviation Value ColNumberUpks(filed_zu_deviation.Num, filed_zu_deviation.Name, TableColumns_1)
+               ColNum = ColNumberUpks(filed_zu_deviation.Num, filed_zu_deviation.Name, TableColumns_1)
+               if TableIsOpenUpks(table_zu) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_zu, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmZuDeviation Value ColNum end if
+               end if
             end if
          end if
       Next
@@ -379,7 +392,10 @@ Sub SetDialogElementsUpks
             Call DialogFillUpksTableUpks_OnClick
 
             if field_upks_kad_num.Num > 0 then
-               Alter Control DialogFillUpksPmUpksNum Value ColNumberUpks(field_upks_kad_num.Num, field_upks_kad_num.Name, TableColumns_2)
+               ColNum = ColNumberUpks(field_upks_kad_num.Num, field_upks_kad_num.Name, TableColumns_2)
+               if TableIsOpenUpks(table_upks) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_upks, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmUpksNum Value ColNum end if
+               end if
             end if
          end if
       Next
@@ -605,3 +621,19 @@ dim iCol as integer
       Print "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList)) + ", ColNumber: " + str$(0)
    end if
 end function
+
+
+Function TableIsOpenUpks(byval Name as string) as logical
+Dim i as integer
+
+   for i = 1 to NumTables()
+      if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)        End If
+      if TableInfo(i, TAB_INFO_NAME) = Name then
+            TableIsOpenUpks = true
+            Exit Function
+      End If
+   Next
+   TableIsOpenUpks = false
+
+   if Debug then Print "Таблица " + Name + " не открыта."        End If
+End Function

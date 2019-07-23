@@ -35,9 +35,12 @@ Declare Sub LoadIniNear
 Declare Sub SaveIniNear
 Declare Sub GetDialogElementsNear
 Declare Sub SetDialogElementsNear
+Declare Sub MainThreadNear
 
 declare Sub SelectTableNear(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
 declare function getColNumberNear(byval table as string, byval colName as string) as integer
+declare Function TableIsOpenNear(byval Name as string) as logical
+declare Function ColNumberNear(byval Num as integer, byval Name as string, ColList() as string) as integer
 
 Declare function SelectProjectionNear(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
 Declare Sub GetAndSetCoordSysNear(byval TableName as string, byval setType as string)
@@ -46,13 +49,33 @@ Declare Function WhatSystemOfCoordinatesWindowNear(byval WindowName as integer) 
 
 Global Debug As logical
 
+Type ListInfo
+   Name as string
+   Num as integer
+   FieldNum as integer
+End Type
+
 Dim realyCoordSys As string
 
 Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
 Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
 
+dim next_row as integer
+
+dim table_source as string
+dim field_source_address as ListInfo
+
+dim table_reciver as string
+dim field_reciver_address as ListInfo
+dim field_reciver_distance as ListInfo
+dim field_reciver_angle as ListInfo
+dim settings_reciver_utits_distance as ListInfo  ' Num для номера, Name для текста типа "m"
+dim settings_reciver_utits_angle as ListInfo  ' Num для номера, Name для текста типа "Румб"
 
 Sub DialogNearAreas_OnShow
+   Call LoadIniNear
+
+   if Debug then Print "------------------------------------------------" end if
 
 '//{$BEGIN INIT CODE FOR CONTROL DNA_ResultTableList}
    ReDim DNA_ResultTableList_saLayers(0)
@@ -90,10 +113,9 @@ Sub DialogNearAreas_OnShow
    End If
 '//{$END INIT CODE FOR CONTROL DNA_SourceTableList}
 
-   Call SetDialogElementsNear
-
    Call DNA_SourceTableList_OnClick
    Call DNA_ResultTableList_OnClick
+   Call SetDialogElementsNear
 
 End Sub
 
@@ -109,7 +131,52 @@ End Sub
 
 
 Sub DNA_btnOK_OnClick
+   dim MsgString as string
+
    Call GetDialogElementsNear
+   Call SaveIniNear
+
+   MsgString = "Расчет УПКС..."
+
+   select * from table_reciver into work_table noselect
+
+   next_row = 1
+
+   ProgressBar MsgString Calling MainThreadNear Range TableInfo(work_table, TAB_INFO_NROWS)
+   If CommandInfo(CMD_INFO_STATUS) Then
+      if TableInfo(work_table, TAB_INFO_NROWS) > 20 then
+         Note "Расчет завершен! Спасибо за терпение."
+      end If
+   Else
+      Note "Операция прервана."
+      dialog preserve
+      ' Goto end_sub
+   End If
+   close table work_table
+End Sub
+
+
+Sub MainThreadNear
+   dim start_time as float
+
+   start_time = Timer()
+
+   Fetch Rec next_row From work_table
+   Do While Not EOT(work_table) And Timer( ) - start_time < 2
+      if Debug then print "String " + str$(next_row) end If
+
+
+
+   Fetch Next From work_table
+      next_row = next_row + 1
+      ' close table work_one_row
+   Loop
+
+   If next_row > TableInfo(work_table, TAB_INFO_NROWS) Then
+      ProgressBar = -1 ' сообщить "Готово!"
+   Else
+      ProgressBar = next_row ' сообщить "Прервано."
+   End If
 End Sub
 
 
@@ -134,8 +201,15 @@ Sub DNA_ResultTableList_OnClick
       DNA_ResultTableList_sTableName = DNA_ResultTableList_saLayers(ReadControlValue(DNA_ResultTableList))
       'print "DNA_ResultTableList_sTableName ="+DNA_ResultTableList_sTableName
       Call SelectTableNear(DNA_ResultTableList_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
+
       Alter Control DNA_ResultTableFieldsList Title From Variable FullColumnsInfo_2
       Alter Control DNA_ResultTableFieldsList Enable
+
+      Alter Control DNA_FieldDistance Title From Variable FullColumnsInfo_2
+      Alter Control DNA_FieldDistance Enable
+
+      Alter Control DNA_FieldAngle Title From Variable FullColumnsInfo_2
+      Alter Control DNA_FieldAngle Enable
    End If
 End Sub
 
@@ -161,31 +235,10 @@ End Sub
 
 
 Sub GetDialogElementsNear
-   ' Debug = ReadControlValue(CheckBoxDebug)
 
-   ' TablePhotogrametry.Num = ReadControlValue(myTablesComboBox2)
-   ' TablePhotogrametry.Name = myTablesComboBox2_saLayers(TablePhotogrametry.Num)
-   ' TableOrthophoto.Num = ReadControlValue(myTablesComboBox1)
-   ' TableOrthophoto.Name = myTablesComboBox1_saLayers(TableOrthophoto.Num)
-   ' TableKadastr.Num = ReadControlValue(myTablesBox_Kadastr)
-   ' TableKadastr.Name = myTablesBox_Kadastr_saLayers(TableKadastr.Num)
-
-   ' KadNumberCol.Num = ReadControlValue(PopupMenu1)
-   ' KadNumberCol.Name = TableColumns_1(KadNumberCol.Num)
-   ' InfringementCol.Num = ReadControlValue(PopupMenu2)
-   ' InfringementCol.Name = TableColumns_1(InfringementCol.Num)
-   ' KadNumberColInKadastr.Num = ReadControlValue(PopupMenu_Kadastr_KadNum)
-   ' KadNumberColInKadastr.Name = TableColumns_2(KadNumberColInKadastr.Num)
-
-   ' Tolerance = val(ReadControlValue(EditTextTolerance))
-
-   ' if (TablePhotogrametry.Num > 0  and Not TableIsOpen(TablePhotogrametry.Name)) then
-   '    isSelectionObject = true
-   ' else
-   '    isSelectionObject = false
-   ' End If
-
-   ' EraseByKadastr = ReadControlValue(Dialog1CBoxEraseKadastr)
+   table_reciver = DNA_ResultTableList_saLayers(ReadControlValue(DNA_ResultTableList))
+   table_source = DNA_SourceTableList_saLayers(ReadControlValue(DNA_SourceTableList))
+   
 
    ' if Debug Then
    '    Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
@@ -256,14 +309,14 @@ Sub LoadIniNear
    PachApplicationMBX = ApplicationDirectory$()
    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
 
-   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
-   ' if GetIniKey <> "" Then
-   '     If GetIniKey = "T" Then
-   '        Debug = true
-   '     Else
-   '        Debug = false
-   '     End If
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          Debug = true
+       Else
+          Debug = false
+       End If
+   End If
 
    ' GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Num","0")
    ' if GetIniKey <> "" Then
@@ -344,7 +397,7 @@ Sub SaveIniNear
     PachApplicationMBX = ApplicationDirectory$()
     FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
 
    ' SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Num",str$(TablePhotogrametry.Num))
    ' SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Name",str$(TablePhotogrametry.Name))
@@ -487,3 +540,45 @@ dim iCol as integer
    next
 
 end function
+
+
+Sub DNA_FieldDistance_OnClick
+
+End Sub
+
+
+Sub DNA_FieldAngle_OnClick
+
+End Sub
+
+
+Function ColNumberNear(byval Num as integer, byval Name as string, ColList() as string) as integer
+dim iCol as integer
+   ' note "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList))
+   if Num > 0 then
+      for iCol = 1 to UBound(ColList)
+         if ColList(iCol) = Name then
+            ColNumberNear = iCol
+            Exit Function
+         end if
+      next
+   Else
+      ColNumberNear = 0
+   end if
+end function
+
+
+Function TableIsOpenNear(byval Name as string) as logical
+Dim i as integer
+
+   for i = 1 to NumTables()
+      if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)        End If
+      if TableInfo(i, TAB_INFO_NAME) = Name then
+            TableIsOpenNear = true
+            Exit Function
+      End If
+   Next
+   TableIsOpenNear = false
+
+   if Debug then Print "Таблица " + Name + " не открыта."        End If
+End Function
