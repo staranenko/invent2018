@@ -235,69 +235,114 @@ End Sub
 
 
 Sub GetDialogElementsNear
+   table_source = DNA_SourceTableList_saLayers(ReadControlValue(DNA_SourceTableList))
+   field_source_address.Num = ReadControlValue(DNA_SourceTableFieldsList)
+   field_source_address.Name = TableColumns_1(ReadControlValue(DNA_SourceTableFieldsList))
 
    table_reciver = DNA_ResultTableList_saLayers(ReadControlValue(DNA_ResultTableList))
-   table_source = DNA_SourceTableList_saLayers(ReadControlValue(DNA_SourceTableList))
-   
+   field_reciver_address.Num = ReadControlValue(DNA_ResultTableFieldsList)
+   field_reciver_address.Name = TableColumns_2(ReadControlValue(DNA_ResultTableFieldsList))
+   field_reciver_distance.Num = ReadControlValue(DNA_FieldDistance)
+   field_reciver_distance.Name = TableColumns_2(ReadControlValue(DNA_FieldDistance))
+   field_reciver_angle.Num = ReadControlValue(DNA_FieldAngle)
+   field_reciver_angle.Name = TableColumns_2(ReadControlValue(DNA_FieldAngle))
 
-   ' if Debug Then
-   '    Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
-   '    Print "TablePhotogrametry.Name: " + TablePhotogrametry.Name
-   '    Print "TableOrthophoto.Num: " + str$(TableOrthophoto.Num)
-   '    Print "TableOrthophoto.Name: " + TableOrthophoto.Name
-   '    Print "KadNumberCol.Num: " + str$(KadNumberCol.Num)
-   '    Print "KadNumberCol.Name: " + KadNumberCol.Name
-   '    Print "InfringementCol.Num: " + str$(InfringementCol.Num)
-   '    Print "InfringementCol.Name: " + InfringementCol.Name
-   '    Print "TableKadastr.Num: " + str$(TableKadastr.Num)
-   '    Print "TableKadastr.Name: " + TableKadastr.Name
+   settings_reciver_utits_distance.Num = ReadControlValue(DNA_UnitsDistance)
+   Do case settings_reciver_utits_distance.Num
+      case 1
+         settings_reciver_utits_distance.Name = "m"
+      case 2
+         settings_reciver_utits_distance.Name = "km"
+   end case
 
-   '    Print "Tolerance: " + str$(Tolerance)
-   '    Print "EraseByKadastr: " + str$(EraseByKadastr)
-   ' End if
+   settings_reciver_utits_angle.Num = ReadControlValue(DNA_TypeAngle)
+   Do case settings_reciver_utits_angle.Num
+      case 1
+         settings_reciver_utits_angle.Name = "DirAngle"
+      case 2
+         settings_reciver_utits_angle.Name = "Rumb"
+   end case
+
+   if Debug Then
+      Print "table_source: " + table_source
+      Print "field_source_address.Num: " + str$(field_source_address.Num)
+      Print "field_source_address.Name: " + field_source_address.Name
+
+      Print "table_reciver: " + table_reciver
+      Print "field_reciver_address.Num: " + str$(field_reciver_address.Num)
+      Print "field_reciver_address.Name: " + field_reciver_address.Name
+      Print "field_reciver_distance.Num: " + str$(field_reciver_distance.Num)
+      Print "field_reciver_distance.Name: " + field_reciver_distance.Name
+      Print "field_reciver_angle.Num: " + str$(field_reciver_angle.Num)
+      Print "field_reciver_angle.Name: " + field_reciver_angle.Name
+
+      Print "settings_reciver_utits_distance.Num: " + str$(settings_reciver_utits_distance.Num)
+      Print "settings_reciver_utits_distance.Name: " + settings_reciver_utits_distance.Name
+
+      Print "settings_reciver_utits_angle.Num: " + str$(settings_reciver_utits_angle.Num)
+      Print "settings_reciver_utits_angle.Name: " + settings_reciver_utits_angle.Name
+   End if
 End Sub
 
 
 Sub SetDialogElementsNear
    Dim iTable, ColNum as integer
 
-   ' Alter Control CheckBoxDebug Value Debug
-   ' ALter Control EditTextTolerance Value str$(Tolerance)
-   ' Alter Control Dialog1CBoxEraseKadastr Value EraseByKadastr
+   if table_source <> "" then
+      for iTable = 1 to DNA_SourceTableList_LayerCount
+         if DNA_SourceTableList_saLayers(iTable) = table_source then
+            ALter Control DNA_SourceTableList Value iTable
+            call DNA_SourceTableList_OnClick
 
-   ' ' if TablePhotogrametry.Num > 0 then
-   '    for iTable = 1 to myTablesComboBox2_LayerCount
-   '       if myTablesComboBox2_saLayers(iTable) = TablePhotogrametry.Name then
-   '          Alter Control myTablesComboBox2 Value iTable
-   '       end if
-   '    Next
-   ' ' end If
+            if field_source_address.Num > 0 then
+               ColNum = ColNumberNear(field_source_address.Num, field_source_address.Name, TableColumns_1)
+               if TableIsOpenNear(table_source) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_source, TAB_INFO_NCOLS)) then Alter Control DNA_SourceTableFieldsList Value ColNum end if
+               end if
+            end if
 
-   ' ' if TableOrthophoto.Num > 0 then
-   '    for iTable = 1 to myTablesComboBox1_LayerCount
-   '       if myTablesComboBox1_saLayers(iTable) = TableOrthophoto.Name then
-   '          Alter Control myTablesComboBox1 Value iTable
-   '          Call myTablesComboBox1_OnClick
+         end if
+      next
+   end if
 
-   '          Alter Control PopupMenu1 Value ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1)
+   if table_reciver <> "" then
+      for iTable = 1 to DNA_ResultTableList_LayerCount
+         if DNA_ResultTableList_saLayers(iTable) = table_reciver then
+            ALter Control DNA_ResultTableList Value iTable
+            call DNA_ResultTableList_OnClick
 
-   '          Alter Control PopupMenu2 Value ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1)
+            if field_reciver_address.Num > 0 then
+               ColNum = ColNumberNear(field_reciver_address.Num, field_reciver_address.Name, TableColumns_2)
+               if TableIsOpenNear(table_reciver) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_reciver, TAB_INFO_NCOLS)) then Alter Control DNA_ResultTableFieldsList Value ColNum end if
+               end if
+            end if
 
-   '       end if
-   '    next
-   ' ' end If
+            if field_reciver_distance.Num > 0 then
+               ColNum = ColNumberNear(field_reciver_distance.Num, field_reciver_distance.Name, TableColumns_2)
+               if TableIsOpenNear(table_reciver) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_reciver, TAB_INFO_NCOLS)) then Alter Control DNA_FieldDistance Value ColNum end if
+               end if
+            end if
 
-   ' ' if TableKadastr.Num > 0 then
-   '    for iTable = 1 to myTablesBox_Kadastr_LayerCount
-   '       if myTablesBox_Kadastr_saLayers(iTable) = TableKadastr.Name then
-   '          ALter Control myTablesBox_Kadastr Value iTable
-   '          call myTablesBox_Kadastr_OnClick
+            if field_reciver_angle.Num > 0 then
+               ColNum = ColNumberNear(field_reciver_angle.Num, field_reciver_angle.Name, TableColumns_2)
+               if TableIsOpenNear(table_reciver) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_reciver, TAB_INFO_NCOLS)) then Alter Control DNA_FieldAngle Value ColNum end if
+               end if
+            end if
+            
+         end if
+      next
+   end if
 
-   '          Alter Control PopupMenu_Kadastr_KadNum Value ColNumber(KadNumberColInKadastr.Num, KadNumberColInKadastr.Name, TableColumns_2)
+   if settings_reciver_utits_distance.Num > 0 then
+      Alter Control DNA_UnitsDistance Value settings_reciver_utits_distance.Num
+   end if
 
-   '       end if
-   '    next
-   ' ' end if
+   if settings_reciver_utits_angle.Num > 0 then
+      Alter Control DNA_TypeAngle Value settings_reciver_utits_angle.Num
+   end if
 End Sub
 
 
@@ -318,74 +363,69 @@ Sub LoadIniNear
        End If
    End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Num","0")
-   ' if GetIniKey <> "" Then
-   '    TablePhotogrametry.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Name","")
-   ' if GetIniKey <> "" Then
-   '    TablePhotogrametry.Name = GetIniKey
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"table_source","Name","")
+   if GetIniKey <> "" Then
+      table_source = GetIniKey
+   End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Num","0")
-   ' if GetIniKey <> "" Then
-   '    TableOrthophoto.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Name","")
-   ' if GetIniKey <> "" Then
-   '    TableOrthophoto.Name = GetIniKey
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"field_source_address","Num","0")
+   if GetIniKey <> "" Then
+      field_source_address.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_source_address","Name","")
+   if GetIniKey <> "" Then
+      field_source_address.Name = GetIniKey
+   End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Num","0")
-   ' if GetIniKey <> "" Then
-   '    TableKadastr.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Name","")
-   ' if GetIniKey <> "" Then
-   '    TableKadastr.Name = GetIniKey
-   ' end if
+   GetIniKey = IniReadString(FullINIFileName,"table_reciver","Name","")
+   if GetIniKey <> "" Then
+      table_reciver = GetIniKey
+   End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Num","0")
-   ' if GetIniKey <> "" Then
-   '    KadNumberCol.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Name","")
-   ' if GetIniKey <> "" Then
-   '    KadNumberCol.Name = GetIniKey
-   ' end if
+   GetIniKey = IniReadString(FullINIFileName,"field_reciver_address","Num","0")
+   if GetIniKey <> "" Then
+      field_reciver_address.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_reciver_address","Name","")
+   if GetIniKey <> "" Then
+      field_reciver_address.Name = GetIniKey
+   End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Num","0")
-   ' if GetIniKey <> "" Then
-   '    InfringementCol.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Name","")
-   ' if GetIniKey <> "" Then
-   '    InfringementCol.Name = GetIniKey
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"field_reciver_distance","Num","0")
+   if GetIniKey <> "" Then
+      field_reciver_distance.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_reciver_distance","Name","")
+   if GetIniKey <> "" Then
+      field_reciver_distance.Name = GetIniKey
+   end if
 
-   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Num","0")
-   ' if GetIniKey <> "" Then
-   '    KadNumberColInKadastr.Num = Val(GetIniKey)
-   ' End If
-   ' GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Name","")
-   ' if GetIniKey <> "" Then
-   '    KadNumberColInKadastr.Name = GetIniKey
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"field_reciver_angle","Num","0")
+   if GetIniKey <> "" Then
+      field_reciver_angle.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_reciver_angle","Name","")
+   if GetIniKey <> "" Then
+      field_reciver_angle.Name = GetIniKey
+   end if
 
-   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","Tolerance","0")
-   ' if GetIniKey <> "" Then
-   '    Tolerance = Val(GetIniKey)
-   ' End If
+   GetIniKey = IniReadString(FullINIFileName,"settings_reciver_utits_distance","Num","0")
+   if GetIniKey <> "" Then
+      settings_reciver_utits_distance.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"settings_reciver_utits_distance","Name","")
+   if GetIniKey <> "" Then
+      settings_reciver_utits_distance.Name = GetIniKey
+   End If
 
-   ' GetIniKey = IniReadString(FullINIFileName,"Параметры","EraseByKadastr","F")
-   ' if GetIniKey <> "" Then
-   '     If GetIniKey = "T" Then
-   '       EraseByKadastr = true
-   '     Else
-   '       EraseByKadastr = false
-   '     End If
-   ' End If
-
+   GetIniKey = IniReadString(FullINIFileName,"settings_reciver_utits_angle","Num","0")
+   if GetIniKey <> "" Then
+      settings_reciver_utits_angle.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"settings_reciver_utits_angle","Name","")
+   if GetIniKey <> "" Then
+      settings_reciver_utits_angle.Name = GetIniKey
+   End If
 End Sub
 
 
@@ -399,27 +439,27 @@ Sub SaveIniNear
 
    SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Num",str$(TablePhotogrametry.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Name",str$(TablePhotogrametry.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"table_source", "Name",str$(table_source))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Num",str$(TableOrthophoto.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Name",str$(TableOrthophoto.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"field_source_address", "Num",str$(field_source_address.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_source_address", "Name",str$(field_source_address.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Num",str$(TableKadastr.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Name",str$(TableKadastr.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"table_reciver", "Name",str$(table_reciver))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Num",str$(KadNumberCol.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Name",str$(KadNumberCol.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"field_reciver_address", "Num",str$(field_reciver_address.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_reciver_address", "Name",str$(field_reciver_address.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Num",str$(InfringementCol.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Name",str$(InfringementCol.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"field_reciver_distance", "Num",str$(field_reciver_distance.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_reciver_distance", "Name",str$(field_reciver_distance.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Num",str$(KadNumberColInKadastr.Num))
-   ' SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Name",str$(KadNumberColInKadastr.Name))
+   SetIniKey = IniWriteString(FullINIFileName,"field_reciver_angle", "Num",str$(field_reciver_angle.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_reciver_angle", "Name",str$(field_reciver_angle.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры", "Tolerance",str$(Tolerance))
+   SetIniKey = IniWriteString(FullINIFileName,"settings_reciver_utits_distance", "Num",str$(settings_reciver_utits_distance.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"settings_reciver_utits_distance", "Name",str$(settings_reciver_utits_distance.Name))
 
-   ' SetIniKey = IniWriteString(FullINIFileName,"Параметры","EraseByKadastr",str$(EraseByKadastr))
+   SetIniKey = IniWriteString(FullINIFileName,"settings_reciver_utits_angle", "Num",str$(settings_reciver_utits_angle.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"settings_reciver_utits_angle", "Name",str$(settings_reciver_utits_angle.Name))
 End Sub
 
 
