@@ -1,0 +1,47 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG DialogSettings}
+Include "MapBasic.def"
+Include "DialogSettings.def"
+Sub DialogSettings_Execute
+
+Dialog
+ Title "Настройки"
+ Width 256 Height 79
+ Calling DialogSettings_OnShow
+'//{$Controls}
+   Control OKButton
+     ID DialogSettingsbtnOK
+     Title "OK"
+     Position 143, 58
+     Width 50 Height 15
+     Calling DialogSettingsbtnOK_OnClick
+'//{$Control End}
+   Control CancelButton
+     ID DialogSettingsbtnCancel
+     Title "Отмена"
+     Position 199, 58
+     Width 50 Height 15
+     Calling DialogSettingsbtnCancel_OnClick
+'//{$Control End}
+   Control CheckBox
+     ID DialogSettingsShowDebug
+     Title "Показывать отладочную информацию"
+     Position 13, 11
+     Width 155 Height 8
+     Value 0
+     Calling DialogSettingsShowDebug_OnClick
+'//{$Control End}
+   Control StaticText
+     ID DialogSettingsStaticText1
+     Title "_________________________________________________________________________"
+     Position 5, 44
+     Width 248 Height 8
+'//{$Control End}
+
+If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
+   call DialogSettings_OnOKModalResult
+Else 
+   call DialogSettings_OnCancelModalResult
+End If
+
+End Sub

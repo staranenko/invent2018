@@ -1,0 +1,93 @@
+Include "MAPBASIC.DEF"
+Include "DialogSettings.def"
+
+'Не редактируйте нижеследующие закомментированные строки!
+'//{$DLG_HANDLERS DialogSettings.mb}
+
+Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
+Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
+
+Declare Sub LoadIniSettings
+Declare Sub SaveIniSettings
+Declare Sub GetDialogElementsSettings
+Declare Sub SetDialogElementsSettings
+
+
+Global Debug As logical
+
+
+Sub DialogSettings_OnShow
+    Call LoadIniSettings
+    Call SetDialogElementsSettings
+End Sub
+
+
+Sub DialogSettings_OnOKModalResult
+
+End Sub
+
+
+Sub DialogSettings_OnCancelModalResult
+
+End Sub
+
+
+Sub DialogSettingsbtnOK_OnClick
+    Call GetDialogElementsSettings
+    Call SaveIniSettings
+End Sub
+
+
+Sub DialogSettingsbtnCancel_OnClick
+
+End Sub
+
+
+Sub DialogSettingsShowDebug_OnClick
+
+End Sub
+
+
+Sub GetDialogElementsSettings
+   Debug = ReadControlValue(DialogSettingsShowDebug)
+
+   if Debug Then
+      Print "Debug: " + str$(Debug)
+   End if
+End Sub
+
+
+Sub SetDialogElementsSettings
+    Alter Control DialogSettingsShowDebug Value Debug
+End Sub
+
+
+Sub SaveIniSettings
+    Dim PachApplicationMBX, FullINIFileName As String
+    Dim FormName, KeyString, ValueString As String
+    Dim SetIniKey As String
+
+    PachApplicationMBX = ApplicationDirectory$()
+    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
+End Sub
+
+
+Sub LoadIniSettings
+   Dim PachApplicationMBX, FullINIFileName As String
+   Dim FormName, KeyString, ValueString As String
+   Dim GetIniKey As String
+
+   PachApplicationMBX = ApplicationDirectory$()
+   FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          Debug = true
+       Else
+          Debug = false
+       End If
+   End If
+End Sub

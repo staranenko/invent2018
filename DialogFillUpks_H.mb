@@ -1,0 +1,639 @@
+Include "MAPBASIC.DEF"
+Include "DialogFillUpks.def"
+
+'Не редактируйте нижеследующие закомментированные строки!
+'//{$DLG_HANDLERS DialogFillUpks.mb}
+
+'//{$BEGIN GLOBALS FOR CONTROL DialogFillUpksTableUpks}
+Global DialogFillUpksTableUpks_sTableName As String
+Global DialogFillUpksTableUpks_sTablePath As String
+Global DialogFillUpksTableUpks_saLayers() As String
+Global DialogFillUpksTableUpks_WinID As Integer
+Global DialogFillUpksTableUpks_CurrTable As String
+Global DialogFillUpksTableUpks_LayerCount As Integer
+Global DialogFillUpksTableUpks_I As Integer
+'//{$END GLOBALS FOR CONTROL DialogFillUpksTableUpks}
+
+'//{$BEGIN GLOBALS FOR CONTROL DialogFillUpksmTableZU}
+Global DialogFillUpksmTableZU_sTableName As String
+Global DialogFillUpksmTableZU_sTablePath As String
+Global DialogFillUpksmTableZU_saLayers() As String
+Global DialogFillUpksmTableZU_WinID As Integer
+Global DialogFillUpksmTableZU_CurrTable As String
+Global DialogFillUpksmTableZU_LayerCount As Integer
+Global DialogFillUpksmTableZU_I As Integer
+'//{$END GLOBALS FOR CONTROL DialogFillUpksmTableZU}
+
+
+Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
+Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
+
+declare Sub SelectTableUpks(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+declare function getColNumberUpks(byval table as string, byval colName as string) as integer
+declare Function ColNumberUpks(byval Num as integer, byval Name as string, ColList() as string) as integer
+declare Function TableIsOpenUpks(byval Name as string) as logical
+
+Declare Sub LoadIniUpks
+Declare Sub SaveIniUpks
+Declare Sub GetDialogElementsUpks
+Declare Sub SetDialogElementsUpks
+
+Declare Sub MainThreadUpks
+
+Global Debug As logical
+
+Type ListInfo
+   Name as string
+   Num as integer
+   FieldNum as integer
+End Type
+
+Type KoeffInfo
+   knum as string
+   info as ListInfo
+   value as float
+   difference as float
+End Type
+
+Declare Function FillKoeff(byval knum as string, kf() as KoeffInfo) as logical
+Declare function getMinDifferenceNum(byval vUpks as float, kf() as KoeffInfo) as integer
+
+
+Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
+Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
+
+dim table_zu as string
+dim field_zu_kad_num as ListInfo
+dim field_zu_value_upks as ListInfo
+dim field_zu_kod_upks as ListInfo
+dim filed_zu_deviation as ListInfo
+
+dim table_upks as string
+dim field_upks_kad_num as ListInfo
+
+dim next_row as integer
+
+dim koeff(16) as KoeffInfo
+
+Sub DialogFillUpks_OnShow
+   Call LoadIniUpks
+
+   if Debug then Print "------------------------------------------------" end if
+
+'//{$BEGIN INIT CODE FOR CONTROL DialogFillUpksTableUpks}
+   ReDim DialogFillUpksTableUpks_saLayers(0)
+   DialogFillUpksTableUpks_WinID = FrontWindow()
+   If DialogFillUpksTableUpks_WinID Then
+      DialogFillUpksTableUpks_LayerCount = NumTables()
+   Else
+      DialogFillUpksTableUpks_LayerCount = 0
+      Alter Control DialogFillUpksTableUpks Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( DialogFillUpksTableUpks_LayerCount <> 0) Then
+      ReDim DialogFillUpksTableUpks_saLayers(DialogFillUpksTableUpks_LayerCount)
+      For DialogFillUpksTableUpks_i = 1 to DialogFillUpksTableUpks_LayerCount
+         DialogFillUpksTableUpks_saLayers(DialogFillUpksTableUpks_i) = TableInfo(DialogFillUpksTableUpks_i, TAB_INFO_NAME)
+      Next
+      Alter Control DialogFillUpksTableUpks Title From Variable DialogFillUpksTableUpks_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL DialogFillUpksTableUpks}
+
+'//{$BEGIN INIT CODE FOR CONTROL DialogFillUpksmTableZU}
+   ReDim DialogFillUpksmTableZU_saLayers(0)
+   DialogFillUpksmTableZU_WinID = FrontWindow()
+   If DialogFillUpksmTableZU_WinID Then
+      DialogFillUpksmTableZU_LayerCount = NumTables()
+   Else
+      DialogFillUpksmTableZU_LayerCount = 0
+      Alter Control DialogFillUpksmTableZU Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( DialogFillUpksmTableZU_LayerCount <> 0) Then
+      ReDim DialogFillUpksmTableZU_saLayers(DialogFillUpksmTableZU_LayerCount)
+      For DialogFillUpksmTableZU_i = 1 to DialogFillUpksmTableZU_LayerCount
+         DialogFillUpksmTableZU_saLayers(DialogFillUpksmTableZU_i) = TableInfo(DialogFillUpksmTableZU_i, TAB_INFO_NAME)
+      Next
+      Alter Control DialogFillUpksmTableZU Title From Variable DialogFillUpksmTableZU_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL DialogFillUpksmTableZU}
+
+   Call DialogFillUpksmTableZU_OnClick
+   Call DialogFillUpksTableUpks_OnClick
+   Call SetDialogElementsUpks
+
+End Sub
+
+
+Sub DialogFillUpks_OnOKModalResult
+
+End Sub
+
+
+Sub DialogFillUpks_OnCancelModalResult
+
+End Sub
+
+
+Sub DialogFillUpksbtnOK_OnClick
+   dim MsgString as string
+
+   Call GetDialogElementsUpks
+   Call SaveIniUpks
+
+   MsgString = "Расчет УПКС..."
+
+   select * from table_zu into work_table noselect
+
+   select * from table_upks into tmp_rows_upks noselect
+
+   next_row = 1
+
+   ProgressBar MsgString Calling MainThreadUpks Range TableInfo(work_table, TAB_INFO_NROWS)
+   If CommandInfo(CMD_INFO_STATUS) Then
+      if TableInfo(work_table, TAB_INFO_NROWS) > 20 then
+         Note "Расчет завершен! Спасибо за терпение."
+      end If
+   Else
+      Note "Операция прервана."
+      dialog preserve
+      ' Goto end_sub
+   End If
+
+   close table work_table
+   close table tmp_rows_upks
+End Sub
+
+
+Sub MainThreadUpks
+   dim iFor, iRow as integer
+   dim start_time as float
+   dim kad_num as string
+   dim value_upks as float
+   dim minDifferenceNum as integer
+
+   start_time = Timer()
+
+   iRow = next_row
+
+   Fetch Rec next_row From work_table
+   Do While Not EOT(work_table) And Timer( ) - start_time < 2
+      if Debug then print "String " + str$(next_row) + " = " + str$(iRow) end If
+
+      select * from work_table where rowid = iRow into work_one_row noselect
+      kad_num = work_one_row.COL(field_zu_kad_num.Num)
+      value_upks = work_one_row.COL(field_zu_value_upks.Num)
+      if Debug then print "   " + field_zu_kad_num.Name + "=" + kad_num + " : " + str$(value_upks) end If
+
+      if FillKoeff(kad_num, koeff) then
+        if Debug then 
+           for iFor = 1 to 16
+              Print "   Name " + koeff(iFor).info.Name + ", Num " + koeff(iFor).info.Num + ", Value  " + koeff(iFor).value
+           next
+        end if
+
+        minDifferenceNum = getMinDifferenceNum(value_upks, koeff)
+
+        if Debug then
+           if minDifferenceNum > 0 then
+              Print "DiffVal = " + str$(koeff(minDifferenceNum).difference) + ", DiffNum = " + str$(minDifferenceNum) + ", UPKS = " + str$(koeff(minDifferenceNum).value)
+           Else
+              Print "   not count"
+           end if 
+        end if 
+
+        if minDifferenceNum > 0 then
+           update work_one_row set "COL"+field_zu_kod_upks.Num = minDifferenceNum, "COL"+filed_zu_deviation.Num = koeff(minDifferenceNum).difference
+        Else
+           update work_one_row set "COL"+field_zu_kod_upks.Num = minDifferenceNum
+        end if
+
+      end if 
+
+      Fetch Next From work_table
+      iRow = iRow + 1
+      next_row = next_row + 1
+      close table work_one_row
+   Loop
+
+   If next_row > TableInfo(work_table, TAB_INFO_NROWS) Then
+      ProgressBar = -1 ' сообщить "Готово!"
+   Else
+      ProgressBar = next_row ' сообщить "Прервано."
+   End If
+End Sub
+
+
+Function FillKoeff(byval knum as string, kf() as KoeffInfo) as logical
+   dim colNum, i as integer
+
+   select * from tmp_rows_upks where tmp_rows_upks.COL(field_upks_kad_num.Num) = knum into knum_row noselect
+
+   if Debug then Print "   finding " + knum + " in " + table_upks + " / " + field_upks_kad_num.Name end if
+
+   if TableInfo(knum_row, TAB_INFO_NROWS) > 0 then
+      for i = 1 to 15
+         kf(i).knum = knum
+         kf(i).info.Name = "_" + str$(i)
+         kf(i).info.Num = i
+         if kf(i).info.FieldNum <=0 then
+            colNum = getColNumberUpks(knum_row, kf(i).info.Name)
+         Else
+            colNum = kf(i).info.FieldNum
+         end if
+         kf(i).value = knum_row.COL(colNum)
+      next
+      kf(16).knum = knum
+      kf(16).info.Name = "_" + str$(16)
+      kf(16).info.Num = 16
+      kf(16).value = 1
+
+      FillKoeff = true
+   Else
+      FillKoeff = false
+   end if 
+
+   if Debug then Print "   - find " + str$(TableInfo(knum_row, TAB_INFO_NROWS)) end if
+
+   close table knum_row
+End function
+
+
+Sub DialogFillUpksbtnCancel_OnClick
+
+End Sub
+
+
+Sub DialogFillUpksmTableZU_OnClick
+   If UBound(DialogFillUpksmTableZU_saLayers) > 0 Then
+      DialogFillUpksmTableZU_sTableName = DialogFillUpksmTableZU_saLayers(ReadControlValue(DialogFillUpksmTableZU))
+      'print "DialogFillUpksmTableZU_sTableName ="+DialogFillUpksmTableZU_sTableName
+      Call SelectTableUpks(DialogFillUpksmTableZU_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
+      Alter Control DialogFillUpksPmZuNumKvartal Title From Variable FullColumnsInfo_1
+      Alter Control DialogFillUpksPmZuNumKvartal Enable
+      Alter Control DialogFillUpksPmZuValueUpks Title From Variable FullColumnsInfo_1
+      Alter Control DialogFillUpksPmZuValueUpks Enable
+      Alter Control DialogFillUpksPmZuKodUpks Title From Variable FullColumnsInfo_1
+      Alter Control DialogFillUpksPmZuKodUpks Enable
+      Alter Control DialogFillUpksPmZuDeviation Title From Variable FullColumnsInfo_1
+      Alter Control DialogFillUpksPmZuDeviation Enable
+   End If
+End Sub
+
+
+Sub DialogFillUpksPmZuKodUpks_OnClick
+
+End Sub
+
+
+Sub DialogFillUpksPmZuNumKvartal_OnClick
+
+End Sub
+
+
+Sub DialogFillUpksTableUpks_OnClick
+   If UBound(DialogFillUpksTableUpks_saLayers) > 0 Then
+      DialogFillUpksTableUpks_sTableName = DialogFillUpksTableUpks_saLayers(ReadControlValue(DialogFillUpksTableUpks))
+      'print "DialogFillUpksTableUpks_sTableName ="+DialogFillUpksTableUpks_sTableName
+      Call SelectTableUpks(DialogFillUpksTableUpks_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
+      Alter Control DialogFillUpksPmUpksNum Title From Variable FullColumnsInfo_2
+      Alter Control DialogFillUpksPmUpksNum Enable
+   End If
+End Sub
+
+
+Sub DialogFillUpksPmUpksNum_OnClick
+
+End Sub
+
+
+Sub DialogFillUpksPmZuDeviation_OnClick
+
+End Sub
+
+
+Sub GetDialogElementsUpks
+   table_zu = DialogFillUpksmTableZU_sTableName
+   field_zu_kad_num.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuNumKvartal))
+   field_zu_kad_num.Num = ReadControlValue(DialogFillUpksPmZuNumKvartal)
+   field_zu_value_upks.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuValueUpks))
+   field_zu_value_upks.Num = ReadControlValue(DialogFillUpksPmZuValueUpks)
+   field_zu_kod_upks.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuKodUpks))
+   field_zu_kod_upks.Num = ReadControlValue(DialogFillUpksPmZuKodUpks)
+   filed_zu_deviation.Name = TableColumns_1(ReadControlValue(DialogFillUpksPmZuDeviation))
+   filed_zu_deviation.Num = ReadControlValue(DialogFillUpksPmZuDeviation)
+
+   table_upks = DialogFillUpksTableUpks_sTableName
+   field_upks_kad_num.Name = TableColumns_2(ReadControlValue(DialogFillUpksPmUpksNum))
+   field_upks_kad_num.Num = ReadControlValue(DialogFillUpksPmUpksNum)
+
+   if Debug Then
+      Print "table_zu: " + table_zu
+      Print "field_zu_kad_num: " + field_zu_kad_num.Name
+      Print "field_zu_value_upks: " + field_zu_value_upks.Name
+      Print "field_zu_kod_upks: " + field_zu_kod_upks.Name
+      Print "filed_zu_deviation: " + filed_zu_deviation.Name
+
+      Print "table_upks: " + table_upks
+      Print "field_upks_kad_num: " + field_upks_kad_num.Name
+   End if
+End Sub
+
+
+Sub SetDialogElementsUpks
+   Dim iTable, ColNum as integer
+
+   ' Alter Control DialogFillUpksPmZuNumKvartal Disable
+   ' Alter Control DialogFillUpksPmZuValueUpks Disable
+   ' Alter Control DialogFillUpksPmZuKodUpks Disable
+   ' Alter Control DialogFillUpksPmZuDeviation Disable
+
+   ' Alter Control DialogFillUpksPmUpksNum Disable
+
+   if table_zu <> "" then
+      for iTable = 1 to DialogFillUpksmTableZU_LayerCount
+         if DialogFillUpksmTableZU_saLayers(iTable) = table_zu then
+            Alter Control DialogFillUpksmTableZU Value iTable
+            Call DialogFillUpksmTableZU_OnClick
+
+            if field_zu_kad_num.Num > 0 then
+               ColNum = ColNumberUpks(field_zu_kad_num.Num, field_zu_kad_num.Name, TableColumns_1)
+               if TableIsOpenUpks(table_zu) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_zu, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmZuNumKvartal Value ColNum end if
+               end if 
+            end if
+
+            if field_zu_value_upks.Num > 0 then
+               ColNum = ColNumberUpks(field_zu_value_upks.Num, field_zu_value_upks.Name, TableColumns_1)
+               if TableIsOpenUpks(table_zu) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_zu, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmZuValueUpks Value ColNum end if
+               end if
+            end if
+
+            if field_zu_kod_upks.Num > 0 then
+               ColNum = ColNumberUpks(field_zu_kod_upks.Num, field_zu_kod_upks.Name, TableColumns_1)
+               if TableIsOpenUpks(table_zu) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_zu, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmZuKodUpks Value ColNum end if
+               end if
+            end if
+
+            if filed_zu_deviation.Num > 0 then
+               ColNum = ColNumberUpks(filed_zu_deviation.Num, filed_zu_deviation.Name, TableColumns_1)
+               if TableIsOpenUpks(table_zu) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_zu, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmZuDeviation Value ColNum end if
+               end if
+            end if
+         end if
+      Next
+   end If
+
+   if table_upks <> "" then
+      for iTable = 1 to DialogFillUpksTableUpks_LayerCount
+         if DialogFillUpksTableUpks_saLayers(iTable) = table_upks then
+            Alter Control DialogFillUpksTableUpks Value iTable
+            Call DialogFillUpksTableUpks_OnClick
+
+            if field_upks_kad_num.Num > 0 then
+               ColNum = ColNumberUpks(field_upks_kad_num.Num, field_upks_kad_num.Name, TableColumns_2)
+               if TableIsOpenUpks(table_upks) then
+                  if (ColNum > 0 and ColNum <= TableInfo(table_upks, TAB_INFO_NCOLS)) then Alter Control DialogFillUpksPmUpksNum Value ColNum end if
+               end if
+            end if
+         end if
+      Next
+   end If
+End Sub
+
+
+Sub LoadIniUpks
+   Dim PachApplicationMBX, FullINIFileName As String
+   Dim FormName, KeyString, ValueString As String
+   Dim GetIniKey As String
+
+   PachApplicationMBX = ApplicationDirectory$()
+   FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          Debug = true
+       Else
+          Debug = false
+       End If
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"table_zu","Name","")
+   if GetIniKey <> "" Then
+      table_zu = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_kad_num","Num","0")
+   if GetIniKey <> "" Then
+      field_zu_kad_num.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_kad_num","Name","")
+   if GetIniKey <> "" Then
+      field_zu_kad_num.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_value_upks","Num","0")
+   if GetIniKey <> "" Then
+      field_zu_value_upks.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_value_upks","Name","")
+   if GetIniKey <> "" Then
+      field_zu_value_upks.Name = GetIniKey
+   end if
+
+      GetIniKey = IniReadString(FullINIFileName,"field_zu_kod_upks","Num","0")
+   if GetIniKey <> "" Then
+      field_zu_kod_upks.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_zu_kod_upks","Name","")
+   if GetIniKey <> "" Then
+      field_zu_kod_upks.Name = GetIniKey
+   end if
+
+      GetIniKey = IniReadString(FullINIFileName,"filed_zu_deviation","Num","0")
+   if GetIniKey <> "" Then
+      filed_zu_deviation.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"filed_zu_deviation","Name","")
+   if GetIniKey <> "" Then
+      filed_zu_deviation.Name = GetIniKey
+   end if
+
+   GetIniKey = IniReadString(FullINIFileName,"table_upks","Name","")
+   if GetIniKey <> "" Then
+      table_upks = GetIniKey
+   end if
+
+   GetIniKey = IniReadString(FullINIFileName,"field_upks_kad_num","Num","0")
+   if GetIniKey <> "" Then
+      field_upks_kad_num.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"field_upks_kad_num","Name","")
+   if GetIniKey <> "" Then
+      field_upks_kad_num.Name = GetIniKey
+   End If
+End Sub
+
+
+Sub SaveIniUpks
+    Dim PachApplicationMBX, FullINIFileName As String
+    Dim FormName, KeyString, ValueString As String
+    Dim SetIniKey As String
+
+    PachApplicationMBX = ApplicationDirectory$()
+    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
+
+   SetIniKey = IniWriteString(FullINIFileName,"table_zu", "Name",str$(table_zu))
+
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_kad_num", "Num",str$(field_zu_kad_num.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_kad_num", "Name",str$(field_zu_kad_num.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_value_upks", "Num",str$(field_zu_value_upks.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_value_upks", "Name",str$(field_zu_value_upks.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_kod_upks", "Num",str$(field_zu_kod_upks.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_zu_kod_upks", "Name",str$(field_zu_kod_upks.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"filed_zu_deviation", "Num",str$(filed_zu_deviation.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"filed_zu_deviation", "Name",str$(filed_zu_deviation.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"table_upks", "Name",str$(table_upks))
+
+   SetIniKey = IniWriteString(FullINIFileName,"field_upks_kad_num", "Num",str$(field_upks_kad_num.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"field_upks_kad_num", "Name",str$(field_upks_kad_num.Name))
+End Sub
+
+
+Sub SelectTableUpks(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+     Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
+     Dim SpaceString As String
+         ReDim FullColumnsInfo(0)
+         ReDim TableColumns(0)
+         ReDim TypeColumns(0)
+         For i_counter = 1 to NumCols(TableName)
+             ReDim TableColumns(UBound(TableColumns)+1)
+             ReDim TypeColumns(UBound(TypeColumns)+1)
+             TableColumns(i_counter) = ColumnInfo(TableName,"COL"+i_counter,COL_INFO_NAME)
+             Do Case  ColumnInfo(TableName,"COL"+i_counter,COL_INFO_TYPE)
+                      Case COL_TYPE_CHAR
+                           TypeColumns(i_counter) = "Символьный"
+                      Case COL_TYPE_DECIMAL
+                           TypeColumns(i_counter) = "Десятичный"
+                      Case COL_TYPE_FLOAT
+                           TypeColumns(i_counter) = "Вещественный"
+                      Case COL_TYPE_INTEGER
+                           TypeColumns(i_counter) = "Целочисленный (4 байт)"
+                      Case COL_TYPE_SMALLINT
+                           TypeColumns(i_counter) = "Короткое целое число (2 байт)"
+                      Case COL_TYPE_DATE
+                           TypeColumns(i_counter) = "Дата"
+                      Case COL_TYPE_LOGICAL
+                           TypeColumns(i_counter) = "Логический"
+                      Case COL_TYPE_GRAPHIC
+                           TypeColumns(i_counter) = "Специальный тип колонки (Obj)"
+                      Case Else
+                           Note "Ошибка чтения таблицы " + TableName
+                           Exit Sub
+             End Case
+         Next
+         For i_counter = 1 to NumCols(TableName) - 1
+             i_MaxLen = Maximum(Len(TableColumns(i_counter)),Len(TableColumns(i_counter + 1)))
+             MaxLen = Maximum(MaxLen,i_MaxLen)
+         Next
+         For i_counter = 1 to NumCols(TableName)
+             ReDim FullColumnsInfo(UBound(FullColumnsInfo)+1)
+             SpaceString = ""
+             For j_counter = 1 to Fix((MaxLen - Len(TableColumns(i_counter)))*1.8)
+                 SpaceString = SpaceString + " "
+             Next
+             FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
+         Next
+End Sub
+
+
+function getColNumberUpks(byval table as string, byval colName as string) as integer
+dim iCol as integer
+
+   for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
+      if UCase$(colName) = UCase$(ColumnInfo(table, "COL"+iCol, COL_INFO_NAME)) then
+         getColNumberUpks = iCol
+         Exit function
+      end if
+   next
+
+end function
+
+Sub DialogFillUpksPmZuValueUpks_OnClick
+
+End Sub
+
+
+function getMinDifferenceNum(byval vUpks as float, kf() as KoeffInfo) as integer
+   dim iFor as integer
+   dim minDiffNum as integer
+   dim minDiffVal as float
+
+   if UBound(kf) = 0 then
+      getMinDifferenceNum = 0
+      exit function
+   end if
+
+   minDiffNum = 0
+   minDiffVal = 0
+   for iFor = 1 to UBound(kf)
+      kf(iFor).difference = Abs(vUpks - kf(iFor).value)
+      if iFor = 1 then
+         minDiffVal = kf(iFor).difference
+      end if
+      if kf(iFor).difference <= minDiffVal then
+         minDiffVal = kf(iFor).difference
+         minDiffNum = iFor
+      end if
+   Next
+
+   getMinDifferenceNum = minDiffNum
+end function
+
+
+Function ColNumberUpks(byval Num as integer, byval Name as string, ColList() as string) as integer
+dim iCol as integer
+   if Num > 0 then
+      for iCol = 1 to UBound(ColList)
+         if ColList(iCol) = Name then
+            ColNumberUpks = iCol
+
+            if Debug then 
+               Print "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList)) + ", ColNumber: " + str$(iCol)
+            end if
+
+            Exit Function
+         end if
+      next
+   Else
+      ColNumberUpks = 0
+   end if
+
+   if Debug then 
+      Print "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList)) + ", ColNumber: " + str$(0)
+   end if
+end function
+
+
+Function TableIsOpenUpks(byval Name as string) as logical
+Dim i as integer
+
+   for i = 1 to NumTables()
+      if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)        End If
+      if TableInfo(i, TAB_INFO_NAME) = Name then
+            TableIsOpenUpks = true
+            Exit Function
+      End If
+   Next
+   TableIsOpenUpks = false
+
+   if Debug then Print "Таблица " + Name + " не открыта."        End If
+End Function

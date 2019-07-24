@@ -1,0 +1,47 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG_CTRLS&SUBS_DEF}
+
+'//Dialog Controls IDs
+Define   Dialog1btnOK   1
+Define   Dialog1btnCancel   2
+Define   StaticText1   3
+Define   myTablesComboBox1   4
+Define   myTablesComboBox2   5
+Define   PopupMenu1   6
+Define   PopupMenu2   7
+Define   EditTextTolerance   8
+Define   StaticText2   9
+Define   StaticText3   10
+Define   StaticText4   11
+Define   StaticText5   12
+Define   StaticText6   13
+Define   GroupBox1   14
+Define   GroupBox2   15
+Define   StaticText7   16
+Define   GroupBox3   17
+Define   StaticText9   18
+Define   StaticText10   19
+Define   PopupMenu_Kadastr_KadNum   20
+Define   myTablesBox_Kadastr   21
+Define   Dialog1btnEraseOnly   22
+Define   Dialog1CBoxEraseKadastr   23
+Define   Dialog1btnTestKadNumber   24
+
+'//Dialog DialogPlotComparison Handlers Declaration
+Declare Sub DialogPlotComparison_Execute
+Declare Sub DialogPlotComparison_OnShow
+Declare Sub DialogPlotComparison_OnOKModalResult
+Declare Sub DialogPlotComparison_OnCancelModalResult
+
+'//Controls Handlers Declaration
+Declare Sub Dialog1btnOK_OnClick
+Declare Sub Dialog1btnCancel_OnClick
+Declare Sub myTablesComboBox1_OnClick
+Declare Sub myTablesComboBox2_OnClick
+Declare Sub PopupMenu1_OnClick
+Declare Sub PopupMenu2_OnClick
+Declare Sub PopupMenu_Kadastr_KadNum_OnClick
+Declare Sub myTablesBox_Kadastr_OnClick
+Declare Sub Dialog1btnEraseOnly_OnClick
+Declare Sub Dialog1CBoxEraseKadastr_OnClick
+Declare Sub Dialog1btnTestKadNumber_OnClick

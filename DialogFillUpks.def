@@ -1,0 +1,40 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG_CTRLS&SUBS_DEF}
+
+'//Dialog Controls IDs
+Define   DialogFillUpksbtnOK   1
+Define   DialogFillUpksbtnCancel   2
+Define   DialogFillUpksGroupBox1   3
+Define   DialogFillUpksmTableZU   4
+Define   DialogFillUpksPmZuKodUpks   5
+Define   DialogFillUpksPmZuNumKvartal   6
+Define   DialogFillUpksStaticText1   7
+Define   DialogFillUpksStaticText2   8
+Define   DialogFillUpksStaticText3   9
+Define   DialogFillUpksGroupBox2   10
+Define   DialogFillUpksStaticText4   11
+Define   DialogFillUpksStaticText5   12
+Define   DialogFillUpksTableUpks   13
+Define   DialogFillUpksPmUpksNum   14
+Define   DialogFillUpksStaticText6   15
+Define   DialogFillUpksPmZuDeviation   16
+Define   DialogFillUpksStaticText7   17
+Define   DialogFillUpksStaticText8   18
+Define   DialogFillUpksPmZuValueUpks   19
+
+'//Dialog DialogFillUpks Handlers Declaration
+Declare Sub DialogFillUpks_Execute
+Declare Sub DialogFillUpks_OnShow
+Declare Sub DialogFillUpks_OnOKModalResult
+Declare Sub DialogFillUpks_OnCancelModalResult
+
+'//Controls Handlers Declaration
+Declare Sub DialogFillUpksbtnOK_OnClick
+Declare Sub DialogFillUpksbtnCancel_OnClick
+Declare Sub DialogFillUpksmTableZU_OnClick
+Declare Sub DialogFillUpksPmZuKodUpks_OnClick
+Declare Sub DialogFillUpksPmZuNumKvartal_OnClick
+Declare Sub DialogFillUpksTableUpks_OnClick
+Declare Sub DialogFillUpksPmUpksNum_OnClick
+Declare Sub DialogFillUpksPmZuDeviation_OnClick
+Declare Sub DialogFillUpksPmZuValueUpks_OnClick

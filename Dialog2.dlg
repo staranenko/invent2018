@@ -1,21 +1,21 @@
 Dialog
- Title "Новый диалог"
+ Title "Удаленность участков"
  Width 400 Height 350
- Position 557, 163
- Calling DialogSettings_OnShow
+ Position 435, 224
+ Calling NearAreas_OnShow
 CenterDisplay
 '//{$Controls}
    Control OKButton
-     ID Dialog1btnOK
+     ID Dialog2btnOK
      Title "OK"
      Position 304, 5
      Width 75 Height 25
-     Calling Dialog1btnOK_OnClick
+     Calling Dialog2btnOK_OnClick
 '//{$Control End}
    Control CancelButton
-     ID Dialog1btnCancel
+     ID Dialog2btnCancel
      Title "Отмена"
      Position 304, 35
      Width 75 Height 25
-     Calling Dialog1btnCancel_OnClick
+     Calling Dialog2btnCancel_OnClick
 '//{$Control End}

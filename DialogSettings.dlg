@@ -1,0 +1,35 @@
+Dialog
+ Title "Настройки"
+ Width 400 Height 168
+ Position 557, 163
+ Calling DialogSettings_OnShow
+CenterDisplay
+'//{$Controls}
+   Control OKButton
+     ID DialogSettingsbtnOK
+     Title "OK"
+     Position 214, 94
+     Width 75 Height 25
+     Calling DialogSettingsbtnOK_OnClick
+'//{$Control End}
+   Control CancelButton
+     ID DialogSettingsbtnCancel
+     Title "Отмена"
+     Position 298, 94
+     Width 75 Height 25
+     Calling DialogSettingsbtnCancel_OnClick
+'//{$Control End}
+   Control CheckBox
+     ID DialogSettingsShowDebug
+     Title "Показывать отладочную информацию"
+     Position 19, 18
+     Width 233 Height 13
+     Value 0
+     Calling DialogSettingsShowDebug_OnClick
+'//{$Control End}
+   Control StaticText
+     ID DialogSettingsStaticText1
+     Title "_________________________________________________________________________"
+     Position 7, 72
+     Width 372 Height 13
+'//{$Control End}

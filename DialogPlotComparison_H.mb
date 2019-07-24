@@ -1,0 +1,1425 @@
+Include "MapBasic.def"
+Include "DialogPlotComparison.def"
+
+Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalValuesAndType.def"
+Include "..\..\..\MapBasic\ActualLabs.MapBasic.SharedDefenition2\UniversalSubAndFunction.def"
+
+
+'Не редактируйте нижеследующие закомментированные строки!
+'//{$DLG_HANDLERS DialogPlotComparison.mb}
+
+'//{$BEGIN GLOBALS FOR CONTROL myTablesBox_Kadastr}
+Global myTablesBox_Kadastr_sTableName As String
+Global myTablesBox_Kadastr_sTablePath As String
+Global myTablesBox_Kadastr_saLayers() As String
+Global myTablesBox_Kadastr_WinID As Integer
+Global myTablesBox_Kadastr_CurrTable As String
+Global myTablesBox_Kadastr_LayerCount As Integer
+Global myTablesBox_Kadastr_I As Integer
+'//{$END GLOBALS FOR CONTROL myTablesBox_Kadastr}
+
+'//{$BEGIN GLOBALS FOR CONTROL myTablesComboBox2}
+Global myTablesComboBox2_sTableName As String
+Global myTablesComboBox2_sTablePath As String
+Global myTablesComboBox2_saLayers() As String
+Global myTablesComboBox2_WinID As Integer
+Global myTablesComboBox2_CurrTable As String
+Global myTablesComboBox2_LayerCount As Integer
+Global myTablesComboBox2_I As Integer
+'//{$END GLOBALS FOR CONTROL myTablesComboBox2}
+
+'//{$BEGIN GLOBALS FOR CONTROL myTablesComboBox1}
+Global myTablesComboBox1_sTableName As String
+Global myTablesComboBox1_sTablePath As String
+Global myTablesComboBox1_saLayers() As String
+Global myTablesComboBox1_WinID As Integer
+Global myTablesComboBox1_CurrTable As String
+Global myTablesComboBox1_LayerCount As Integer
+Global myTablesComboBox1_I As Integer
+'//{$END GLOBALS FOR CONTROL myTablesComboBox1}
+
+DEFINE WorkWithSelectionObject "Выбранные объекты на карте"
+
+Global Debug As logical
+
+Global next_row As Integer
+
+Declare Function IniReadString Lib "alDLIB05.DLL" Alias "IniReadString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal DefV as String) As String
+Declare Function IniWriteString Lib "alDLIB05.DLL" Alias "IniWriteString" (ByVal File as String, ByVal Section as String, ByVal Key as String, ByVal Value as String) As Integer
+
+Declare Sub LoadIni
+Declare Sub SaveIni
+Declare Sub GetDialogElements
+Declare Sub SetDialogElements
+
+Declare function SelectProjection(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
+Declare Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
+
+Declare Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+Declare Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
+Declare Function TableIsOpen(byval Name as string) as logical
+Declare function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualColumn() as logical) as logical
+Declare function reStructureTable(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+Declare function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
+Declare function getColNumber(byval table as string, byval colName as string) as integer
+Declare function CopyFieldValue(byval source as string, byval receiver as string, byval UpdateColumnNumber as integer) as logical
+Declare function CopyFieldValueAndConcat(byval sourceName as string, byval receiverName as string, byval UpdateColumnNumber as integer) as logical
+Declare Sub MainThread
+Declare function prepareInfrigement(byval str as string) as string
+Declare function ErasePhotoByKadastr(byval photoObj as object, byval kadastTable as string) as object
+Declare function checkAreaOverlap(byval table as string, byval checkObject as object) as integer
+Declare function checkKadNumberFromOverlap(byval checkObject as object, byval kadNumber as string, byval kadastrTable as string, byval ColumnKadNumber as integer) as logical
+
+Dim realyCoordSys As string
+
+Dim TableColumns_1(0), TypeColumns_1(0), FullColumnsInfo_1(0) As String
+Dim TableColumns_2(0), TypeColumns_2(0), FullColumnsInfo_2(0) As String
+
+' Диалоговые элементы
+Type ListInfo
+   Name as string
+   Num as integer
+End Type
+
+Dim TablePhotogrametry as ListInfo
+Dim TableOrthophoto as ListInfo
+Dim TableKadastr as ListInfo
+
+Dim KadNumberCol as ListInfo
+Dim InfringementCol as ListInfo
+Dim KadNumberColInKadastr as ListInfo
+
+Dim Tolerance as float
+Dim EraseByKadastr as logical
+Dim EraseByKadastrOnce as logical
+Dim UpdateFields as logical
+Dim CheckKadNumber as logical
+'/ Диалоговые элементы
+
+Dim isSelectionObject as Logical
+Dim isEqualColumn(0) as logical
+
+Type IntersectInfo
+   coincidenceKN as logical
+   areaValue as float
+   kadNum as string
+end Type
+
+
+
+Sub DialogPlotComparison_OnShow
+Dim Tables as integer
+
+   Alter Control PopupMenu1 Disable
+   Alter Control PopupMenu2 Disable
+   Alter Control PopupMenu_Kadastr_KadNum Disable
+'//{$BEGIN INIT CODE FOR CONTROL myTablesBox_Kadastr}
+   ReDim myTablesBox_Kadastr_saLayers(0)
+   myTablesBox_Kadastr_WinID = FrontWindow()
+   If myTablesBox_Kadastr_WinID Then
+      myTablesBox_Kadastr_LayerCount = NumTables() 'MapperInfo(myTablesBox_Kadastr_WinID, MAPPER_INFO_LAYERS)
+   Else
+   myTablesBox_Kadastr_LayerCount = 0
+   Alter Control myTablesBox_Kadastr Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( myTablesBox_Kadastr_LayerCount <> 0) Then
+      ReDim myTablesBox_Kadastr_saLayers(myTablesBox_Kadastr_LayerCount)
+      For myTablesBox_Kadastr_i = 1 to myTablesBox_Kadastr_LayerCount
+         myTablesBox_Kadastr_saLayers(myTablesBox_Kadastr_i) = TableInfo(myTablesBox_Kadastr_i, TAB_INFO_NAME) 'LayerInfo(myTablesBox_Kadastr_WinID, myTablesBox_Kadastr_i, LAYER_INFO_NAME)
+      Next
+      Alter Control myTablesBox_Kadastr Title From Variable myTablesBox_Kadastr_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL myTablesBox_Kadastr}
+
+'//{$BEGIN INIT CODE FOR CONTROL myTablesComboBox2}
+   ReDim myTablesComboBox2_saLayers(0)
+   myTablesComboBox2_WinID = FrontWindow()
+   If myTablesComboBox2_WinID Then
+      myTablesComboBox2_LayerCount = NumTables()
+   Else
+      myTablesComboBox2_LayerCount = 0
+      Alter Control myTablesComboBox2 Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( myTablesComboBox2_LayerCount <> 0) Then
+      ReDim myTablesComboBox2_saLayers(myTablesComboBox2_LayerCount)
+      For myTablesComboBox2_i = 1 to myTablesComboBox2_LayerCount
+         myTablesComboBox2_saLayers(myTablesComboBox2_i) = TableInfo(myTablesComboBox2_i, TAB_INFO_NAME)
+      Next
+      Alter Control myTablesComboBox2 Title From Variable myTablesComboBox2_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL myTablesComboBox2}
+
+'//{$BEGIN INIT CODE FOR CONTROL myTablesComboBox1}
+   ReDim myTablesComboBox1_saLayers(0)
+   myTablesComboBox1_WinID = FrontWindow()
+   If myTablesComboBox1_WinID Then
+      myTablesComboBox1_LayerCount = NumTables()
+   Else
+      myTablesComboBox1_LayerCount = 0
+      Alter Control myTablesComboBox1 Title "-Нет открытых таблиц-" Disable
+   End If
+   If (NumTables() > 0)AND( myTablesComboBox1_LayerCount <> 0) Then
+      ReDim myTablesComboBox1_saLayers(myTablesComboBox1_LayerCount)
+      For myTablesComboBox1_i = 1 to myTablesComboBox1_LayerCount
+         myTablesComboBox1_saLayers(myTablesComboBox1_i) = TableInfo(myTablesComboBox1_i, TAB_INFO_NAME)
+      Next
+      Alter Control myTablesComboBox1 Title From Variable myTablesComboBox1_saLayers
+   End If
+'//{$END INIT CODE FOR CONTROL myTablesComboBox1}
+
+    Call myTablesComboBox2_OnClick
+    Call myTablesComboBox1_OnClick
+    Call myTablesBox_Kadastr_OnClick
+
+    Call LoadIni
+    Call SetDialogElements
+
+    if SelectionInfo(SEL_INFO_NROWS) > 0 then
+      Tables = UBound(myTablesComboBox2_saLayers)
+      Redim myTablesComboBox2_saLayers(Tables + 1)
+      myTablesComboBox2_saLayers(Tables + 1) = WorkWithSelectionObject + " (" + str$(SelectionInfo(SEL_INFO_NROWS)) + " объектов в таблице " + SelectionInfo(SEL_INFO_TABLENAME) + ")"
+      Alter Control myTablesComboBox2 Title From Variable myTablesComboBox2_saLayers
+      Alter Control myTablesComboBox2 Value Tables + 1
+   end if
+
+    If Debug Then Print "-------------------------------" End If
+
+    EraseByKadastrOnce = false
+    CheckKadNumber = false
+
+End Sub
+
+
+Sub DialogPlotComparison_OnOKModalResult
+
+End Sub
+
+
+Sub DialogPlotComparison_OnCancelModalResult
+
+End Sub
+
+
+Sub Dialog1btnOK_OnClick
+   Dim iCount, currentCol as integer
+   dim selectionNameTemp as string
+   dim MsgString as string
+
+   Call GetDialogElements
+   Call SaveIni
+
+   ' UpdateFields = true ' При нажании на текущую кнопку, всегда обновлять поля в таблице.
+   if EraseByKadastrOnce then
+      UpdateFields = false
+   else
+      UpdateFields = true
+   end if
+
+   if UpdateFields then EraseByKadastrOnce = EraseByKadastr end if ' При нажатии на текущую кнопку, обрезать по кадастру в зависимости от устновки переключателя.
+
+   ReDim isEqualColumn(0)
+
+   if isSelectionObject then
+      if Debug then Print "Работаем с выделенными объектами из таблицы " + SelectionInfo(SEL_INFO_TABLENAME) end if
+      ' Готовим объекты для работы
+         selectionNameTemp = SelectionInfo(SEL_INFO_SELNAME)
+         select * from Selection into WorkTable noselect
+         ' TablePhotogrametry.Name = str$(WorkTable)
+         TablePhotogrametry.Name = SelectionInfo(SEL_INFO_TABLENAME)
+         close table selectionNameTemp
+   else
+      if Debug then Print "Работаем со всей таблицей " + TablePhotogrametry.Name end if
+      ' Готовим таблицу для работы
+      select * from TablePhotogrametry.Name into WorkTable noselect
+   End If
+
+   ' Подготовка структры таблиц для дальнейшей работы
+   if not isEqualTableStructure(TableOrthophoto.Name, TablePhotogrametry.Name, isEqualColumn) then
+           if Debug then Print "В проверяемой таблице нет полей из базовой таблицы!" end if
+
+      ' Приведение таблицы от фотограмметристов к таблице по ортофото (добавить недостающие поля). В массиве isEqualColumn помечено каких полей нет.
+      if isSelectionObject then
+         if Not ask("Внимание, требуется добавление полей в таблицу " + TablePhotogrametry.Name + ", что приведет к сбросу выбранных объектов. Вам придется выбрать их заново и повторно запустить обработку.", "Продолжить", "Отменить") then
+            Exit Sub
+         end if
+      end if
+      if Not reStructureTable(TableOrthophoto.Name, TablePhotogrametry.Name, isEqualColumn) then
+         Exit Sub
+      else
+         if isSelectionObject then
+            Note "Поля добавлены. Выберите заново объекты на карте и повторите побработку."
+            Exit Sub
+         end if
+      end if
+   end if
+
+   if Debug then
+      for iCount = 1 to UBound(isEqualColumn)
+         Print "*** " + ColumnInfo(TableOrthophoto.Name, "COL"+iCount, COL_INFO_NAME) + " - " + str$(isEqualColumn(iCount))
+      next
+      Print "Будет обработано " + TableInfo(WorkTable, TAB_INFO_NROWS) + " объектов."
+   end if
+
+   select * from WorkTable where str$(obj) = "region" into WorkTable noselect
+   select * from TableOrthophoto.Name where str$(obj) = "region" into OrthoTable noselect
+
+   if Debug then Print "Анализируется на пересечения с " + TableInfo(OrthoTable, TAB_INFO_NROWS) + " объектами." end if
+
+   ' Основной цикл обработки обектов из таблицы WorkTable
+   next_row = 1
+'   selectionNameTemp = SelectionInfo(SEL_INFO_SELNAME)
+   if WindowInfo(FrontWindow(), WIN_INFO_TYPE) = WIN_MAPPER then
+      Set Map Redraw Off
+   End If
+
+   if Debug then Print "UpdateFields: " + str$(UpdateFields) + " EraseByKadastrOnce: " + str$(EraseByKadastrOnce) end if
+
+
+   if UpdateFields and Not EraseByKadastr then MsgString = "Сопоставление участков..." end if
+   if EraseByKadastrOnce then MsgString = "Обрезание участков кадастром..." end if
+   if UpdateFields and EraseByKadastrOnce then MsgString = "Сопоставление участков и обрезание кадастром..." end if
+   if CheckKadNumber then MsgString = "Проверка кадастровых номеров..." end if
+
+   MsgString = MsgString + " (" + str$(TableInfo(WorkTable, TAB_INFO_NROWS)) + " объектов)"
+
+   ProgressBar MsgString Calling MainThread Range TableInfo(WorkTable, TAB_INFO_NROWS)
+   If CommandInfo(CMD_INFO_STATUS) Then
+      if TableInfo(WorkTable, TAB_INFO_NROWS) > 20 then
+         Note "Сопоставление завершено! Спасибо за терпение."
+      end If
+   Else
+      Note "Операция прервана."
+      dialog preserve
+      Goto end_sub
+   End If
+
+  if SelectionInfo(SEL_INFO_NROWS) > 0 then
+     close table Selection
+  end if
+   end_sub:
+      EraseByKadastrOnce = false
+      if WindowInfo(FrontWindow(), WIN_INFO_TYPE) = WIN_MAPPER then
+         Set Map Redraw On
+      End If
+      Close Table WorkTable
+      Close Table OrthoTable
+End Sub
+
+
+Sub MainThread
+   dim iObjectInWorkTable, iColCountUpdate, InfringementNumber, errorCol as integer
+   dim primeObject, badObject, goodObject as object
+   Dim start_time As Float
+   dim concotinationString, valStr as string
+   dim checkAreaOverlaping as integer
+   dim KadNumberFromWorkTable as string
+   dim coincidence as logical ' Совпадение кадастровых номеров (указаный номер есть в пересекаемых участках из кадастра)
+   dim KadNumberColInPhoto as integer
+
+   start_time = Timer( )
+
+   iObjectInWorkTable = next_row
+   Fetch Rec next_row From WorkTable
+   Do While Not EOT(WorkTable) And Timer( ) - start_time < 2
+      if Debug then Print "Анализируется объект " + iObjectInWorkTable + "..." end if
+
+      select * from WorkTable where rowid = iObjectInWorkTable into WorkTableOneObject noselect
+      primeObject = WorkTableOneObject.obj
+
+      KadNumberColInPhoto = getColNumber(str$(WorkTableOneObject), KadNumberCol.Name)
+      KadNumberFromWorkTable = WorkTableOneObject.COL(KadNumberColInPhoto)
+
+      ' select * from OrthoTable where OrthoTable.obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable) into selIntesectionOrthophoto
+      select * from TableOrthophoto.Name where str$(obj) = "region" AND obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable into subselect) into selIntesectionOrthophoto
+
+      select * from TableKadastr.Name where str$(obj) = "region" AND obj Partly Within (select obj from WorkTable where rowid = iObjectInWorkTable into subselect) into selIntesectionKadastr noselect
+      Close Table subselect
+
+      checkAreaOverlaping = checkAreaOverlap(str$(selIntesectionOrthophoto), primeObject)
+      if checkAreaOverlaping >= 0 then
+         select * from selIntesectionOrthophoto where rowid = checkAreaOverlaping into selIntesectionOrthophoto
+      else
+         ' Ничего не делаем, работаем с тем что выбрано
+      end if
+
+      if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) + " объектами с ортофотоплана." end if
+      if Debug then Print "+++ Найдено пересечение с " + TableInfo(selIntesectionKadastr, TAB_INFO_NROWS) + " объектами из кадастра." end if
+
+      ' ' Обрезаем независимо от наличия ошибок и наличия объектов с ортофотоплана
+      ' if EraseByKadastrOnce then
+      '    primeObject = ErasePhotoByKadastr(primeObject, str$(selIntesectionKadastr))
+      '    Update WorkTableOneObject set obj = primeObject
+      ' end if
+
+      if Not CheckKadNumber then
+         ' if Debug then Print "CheckKadNumber" end if
+         if TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) < 2 and TableInfo(selIntesectionOrthophoto, TAB_INFO_NROWS) > 0 then
+            for iColCountUpdate = 1 to TableInfo(selIntesectionOrthophoto, TAB_INFO_NCOLS)
+               if UpdateFields then
+                  if CopyFieldValue(str$(selIntesectionOrthophoto), str$(WorkTableOneObject), iColCountUpdate) then
+                     if Debug then Print "Поля успешно обновлены (1)." end if
+                  else
+                     Note "Не удалось обновить поля в таблице " + TablePhotogrametry.Name + "."
+                  end if
+               end if
+            next
+
+            goodObject = primeObject
+
+            if UpdateFields then
+               Alter Object goodObject Info  OBJ_INFO_BRUSH, MakeBrush(15, GREEN, -1)
+               Alter Object goodObject Info  OBJ_INFO_PEN, MakePen(2, 2, GREEN)
+
+               Update WorkTableOneObject set obj = goodObject
+            end if
+
+            if EraseByKadastrOnce then
+               goodObject = ErasePhotoByKadastr(goodObject, str$(selIntesectionKadastr))
+               Update WorkTableOneObject set obj = goodObject
+            end if
+         else
+            ' Группировать по кадастровому номеру и если больше 1 то пометить ошибкой. Если 1 то сгруппировать по нарушению. Если 1, то из этой таблицы обновить объект от фотограмметристов.
+            select * from selIntesectionOrthophoto Group By KadNumberCol.Name into groupFromKadNumberCol
+
+            If Debug then Print "Найдено " + str$(TableInfo(groupFromKadNumberCol, TAB_INFO_NROWS)) + " кадастровых участков." end if
+
+            InfringementNumber = TableInfo(groupFromKadNumberCol, TAB_INFO_NROWS)
+
+            if InfringementNumber > 1 then
+               ' Раскрашиваем в красный, т.к. невозможно объеденить
+
+               badObject = primeObject
+
+               Alter Object badObject Info  OBJ_INFO_BRUSH, MakeBrush(107, RED, -1)
+               Alter Object badObject Info  OBJ_INFO_PEN, MakePen(5, 2, RED)
+
+               if UpdateFields then
+                  ' Alter Object badObject Info  OBJ_INFO_BRUSH, MakeBrush(107, RED, -1)
+                  ' Alter Object badObject Info  OBJ_INFO_PEN, MakePen(5, 2, RED)
+
+                  Update WorkTableOneObject set obj = badObject
+
+                  errorCol = getColNumber(WorkTableOneObject, InfringementCol.Name)
+
+                  if checkAreaOverlaping > 0 then
+                     Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! " + str$(InfringementNumber) + " кад. номера."
+                  else
+                     Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! Нет пересечений."
+                  end if
+               end if
+
+               if EraseByKadastrOnce then
+                  ' badObject = ErasePhotoByKadastr(badObject, str$(selIntesectionKadastr))
+                  Update WorkTableOneObject set obj = badObject
+               end if
+            else
+               ' Проверяем на совпадение по нарушению.
+               if InfringementNumber > 0 then
+                  select * from selIntesectionOrthophoto Group By InfringementCol.Name into groupFromInfriggementCol
+
+                  if TableInfo(groupFromInfriggementCol, TAB_INFO_NROWS) > 1 then
+                     ' Объединяем типы нарушений
+                     if Debug then Print "Разные типы нарушений..." end if
+
+                     badObject = primeObject
+
+                     Alter Object badObject Info  OBJ_INFO_BRUSH, MakeBrush(107, RED, -1)
+                     Alter Object badObject Info  OBJ_INFO_PEN, MakePen(5, 2, RED)
+
+                     if EraseByKadastrOnce then
+                        ' badObject = ErasePhotoByKadastr(badObject, str$(selIntesectionKadastr))
+                        Update WorkTableOneObject set obj = badObject
+                     end if
+
+                     if UpdateFields then
+                        ' Alter Object badObject Info  OBJ_INFO_BRUSH, MakeBrush(107, RED, -1)
+                        ' Alter Object badObject Info  OBJ_INFO_PEN, MakePen(5, 2, RED)
+                        Update WorkTableOneObject set obj = badObject
+
+                        errorCol = getColNumber(WorkTableOneObject, InfringementCol.Name)
+                        Update WorkTableOneObject set "COL"+errorCol = "ОШИБКА! " + str$(InfringementNumber) + " нарушения."
+
+                        errorCol = getColNumber(groupFromInfriggementCol, InfringementCol.Name)
+                        concotinationString = ""
+                        Fetch First From groupFromInfriggementCol
+                        Do While Not EOT(groupFromInfriggementCol)
+                           ' Анализировать семанику
+                           valStr = groupFromInfriggementCol.COL(errorCol)
+                           concotinationString = concotinationString + valStr
+                           Fetch Next From groupFromInfriggementCol
+                        Loop
+
+                        ' Note "errorCol: " + str$(errorCol) + ", concotinationString: " + concotinationString
+
+                        for iColCountUpdate = 1 to TableInfo(selIntesectionOrthophoto, TAB_INFO_NCOLS)
+                           if CopyFieldValueAndConcat(str$(groupFromInfriggementCol), str$(WorkTableOneObject), iColCountUpdate) then
+                              if Debug then Print "Поля успешно обновлены (2)." end if
+                           else
+                              Note "Не удалось обновить поля в таблице " + TablePhotogrametry.Name + "."
+                           end if
+                        next
+
+                        concotinationString = prepareInfrigement(concotinationString)
+
+                        errorCol = getColNumber(WorkTableOneObject, InfringementCol.Name)
+                        Update WorkTableOneObject set "COL"+errorCol = concotinationString
+                     end if
+
+                     goodObject = primeObject
+
+                     if UpdateFields then
+                        Alter Object goodObject Info  OBJ_INFO_BRUSH, MakeBrush(15, GREEN, -1)
+                        Alter Object goodObject Info  OBJ_INFO_PEN, MakePen(2, 2, GREEN)
+                        Update WorkTableOneObject set obj = goodObject
+                     end if
+
+                     if EraseByKadastrOnce then
+                        goodObject = ErasePhotoByKadastr(goodObject, str$(selIntesectionKadastr))
+                        Update WorkTableOneObject set obj = goodObject
+                     end if
+                  else
+                     if TableInfo(groupFromInfriggementCol, TAB_INFO_NROWS) > 0 then
+
+                        goodObject = primeObject
+
+                        if UpdateFields then
+                           Alter Object goodObject Info  OBJ_INFO_BRUSH, MakeBrush(15, GREEN, -1)
+                           Alter Object goodObject Info  OBJ_INFO_PEN, MakePen(2, 2, GREEN)
+
+                           Update WorkTableOneObject set obj = goodObject
+
+                           for iColCountUpdate = 1 to TableInfo(selIntesectionOrthophoto, TAB_INFO_NCOLS)
+                              if CopyFieldValue(str$(groupFromInfriggementCol), str$(WorkTableOneObject), iColCountUpdate) then
+                                 if Debug then Print "Поля успешно обновлены (3)." end if
+                              else
+                                 Note "Не удалось обновить поля в таблице " + TablePhotogrametry.Name + "."
+                              end if
+                           next
+                        end if
+
+                        if EraseByKadastrOnce then
+                           goodObject = ErasePhotoByKadastr(goodObject, str$(selIntesectionKadastr))
+                           Update WorkTableOneObject set obj = goodObject
+                        end if
+                     end if
+                  end if
+
+                  close table groupFromInfriggementCol
+               end If
+            end if
+
+            close table groupFromKadNumberCol
+         end if
+      end if
+
+      ' TODO: Проверяем на адекватность кадастрового номера
+      if CheckKadNumber then
+         if Debug then Print "KadNumberColInPhoto: " + str$(KadNumberColInPhoto) + ", KadNumberFromWorkTable: " + str$(KadNumberFromWorkTable) end if
+
+         coincidence = checkKadNumberFromOverlap(primeObject, KadNumberFromWorkTable, str$(selIntesectionKadastr), KadNumberColInKadastr.Num)
+
+         if Not coincidence then
+            badObject = primeObject
+
+            Alter Object badObject Info  OBJ_INFO_BRUSH, MakeBrush(107, BLUE, -1)
+            Alter Object badObject Info  OBJ_INFO_PEN, MakePen(5, 2, BLUE)
+
+            Update WorkTableOneObject set obj = badObject
+         else
+            goodObject = primeObject
+
+            Alter Object goodObject Info  OBJ_INFO_BRUSH, MakeBrush(107, GREEN, -1)
+            Alter Object goodObject Info  OBJ_INFO_PEN, MakePen(5, 2, GREEN)
+
+            Update WorkTableOneObject set obj = goodObject
+         end if
+
+         if Debug then Print "Совпадение кадастрового номера: " + str$(coincidence) end if
+      end if
+
+      Fetch Next From WorkTable
+      iObjectInWorkTable = iObjectInWorkTable + 1
+      close table WorkTableOneObject
+      close table selIntesectionOrthophoto
+      close table selIntesectionKadastr
+
+      next_row = next_row + 1
+   Loop
+
+   If next_row > TableInfo(WorkTable, TAB_INFO_NROWS) Then
+                ProgressBar = -1 ' сообщить "Готово!"
+        Else
+                ProgressBar = next_row ' сообщить "Запись прервана."
+        End If
+end sub
+
+
+Sub Dialog1btnCancel_OnClick
+
+End Sub
+
+
+Sub GetDialogElements
+   ' Debug = ReadControlValue(CheckBoxDebug)
+
+   TablePhotogrametry.Num = ReadControlValue(myTablesComboBox2)
+   TablePhotogrametry.Name = myTablesComboBox2_saLayers(TablePhotogrametry.Num)
+   TableOrthophoto.Num = ReadControlValue(myTablesComboBox1)
+   TableOrthophoto.Name = myTablesComboBox1_saLayers(TableOrthophoto.Num)
+   TableKadastr.Num = ReadControlValue(myTablesBox_Kadastr)
+   TableKadastr.Name = myTablesBox_Kadastr_saLayers(TableKadastr.Num)
+
+   KadNumberCol.Num = ReadControlValue(PopupMenu1)
+   KadNumberCol.Name = TableColumns_1(KadNumberCol.Num)
+   InfringementCol.Num = ReadControlValue(PopupMenu2)
+   InfringementCol.Name = TableColumns_1(InfringementCol.Num)
+   KadNumberColInKadastr.Num = ReadControlValue(PopupMenu_Kadastr_KadNum)
+   KadNumberColInKadastr.Name = TableColumns_2(KadNumberColInKadastr.Num)
+
+   Tolerance = val(ReadControlValue(EditTextTolerance))
+
+   if (TablePhotogrametry.Num > 0  and Not TableIsOpen(TablePhotogrametry.Name)) then
+      isSelectionObject = true
+   else
+      isSelectionObject = false
+   End If
+
+   EraseByKadastr = ReadControlValue(Dialog1CBoxEraseKadastr)
+
+   if Debug Then
+      Print "TablePhotogrametry.Num: " + str$(TablePhotogrametry.Num)
+      Print "TablePhotogrametry.Name: " + TablePhotogrametry.Name
+      Print "TableOrthophoto.Num: " + str$(TableOrthophoto.Num)
+      Print "TableOrthophoto.Name: " + TableOrthophoto.Name
+      Print "KadNumberCol.Num: " + str$(KadNumberCol.Num)
+      Print "KadNumberCol.Name: " + KadNumberCol.Name
+      Print "InfringementCol.Num: " + str$(InfringementCol.Num)
+      Print "InfringementCol.Name: " + InfringementCol.Name
+      Print "TableKadastr.Num: " + str$(TableKadastr.Num)
+      Print "TableKadastr.Name: " + TableKadastr.Name
+
+      Print "Tolerance: " + str$(Tolerance)
+      Print "EraseByKadastr: " + str$(EraseByKadastr)
+   End if
+End Sub
+
+
+Sub SetDialogElements
+   Dim iTable, ColNum as integer
+
+   ' Alter Control CheckBoxDebug Value Debug
+   ALter Control EditTextTolerance Value str$(Tolerance)
+   Alter Control Dialog1CBoxEraseKadastr Value EraseByKadastr
+
+   ' if TablePhotogrametry.Num > 0 then
+      for iTable = 1 to myTablesComboBox2_LayerCount
+         if myTablesComboBox2_saLayers(iTable) = TablePhotogrametry.Name then
+            Alter Control myTablesComboBox2 Value iTable
+         end if
+      Next
+   ' end If
+
+   ' if TableOrthophoto.Num > 0 then
+      for iTable = 1 to myTablesComboBox1_LayerCount
+         if myTablesComboBox1_saLayers(iTable) = TableOrthophoto.Name then
+            Alter Control myTablesComboBox1 Value iTable
+            Call myTablesComboBox1_OnClick
+
+            Alter Control PopupMenu1 Value ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1)
+
+            Alter Control PopupMenu2 Value ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1)
+
+         end if
+      next
+   ' end If
+
+   ' if TableKadastr.Num > 0 then
+      for iTable = 1 to myTablesBox_Kadastr_LayerCount
+         if myTablesBox_Kadastr_saLayers(iTable) = TableKadastr.Name then
+            ALter Control myTablesBox_Kadastr Value iTable
+            call myTablesBox_Kadastr_OnClick
+
+            Alter Control PopupMenu_Kadastr_KadNum Value ColNumber(KadNumberColInKadastr.Num, KadNumberColInKadastr.Name, TableColumns_2)
+
+         end if
+      next
+   ' end if
+End Sub
+
+
+Sub LoadIni
+   Dim PachApplicationMBX, FullINIFileName As String
+   Dim FormName, KeyString, ValueString As String
+   Dim GetIniKey As String
+
+   PachApplicationMBX = ApplicationDirectory$()
+   FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","Debug","T")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          Debug = true
+       Else
+          Debug = false
+       End If
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Num","0")
+   if GetIniKey <> "" Then
+      TablePhotogrametry.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"TablePhotogrametry","Name","")
+   if GetIniKey <> "" Then
+      TablePhotogrametry.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Num","0")
+   if GetIniKey <> "" Then
+      TableOrthophoto.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"TableOrthophoto","Name","")
+   if GetIniKey <> "" Then
+      TableOrthophoto.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Num","0")
+   if GetIniKey <> "" Then
+      TableKadastr.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"TableKadastr","Name","")
+   if GetIniKey <> "" Then
+      TableKadastr.Name = GetIniKey
+   end if
+
+   GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Num","0")
+   if GetIniKey <> "" Then
+      KadNumberCol.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"KadNumberCol","Name","")
+   if GetIniKey <> "" Then
+      KadNumberCol.Name = GetIniKey
+   end if
+
+   GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Num","0")
+   if GetIniKey <> "" Then
+      InfringementCol.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"InfringementCol","Name","")
+   if GetIniKey <> "" Then
+      InfringementCol.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Num","0")
+   if GetIniKey <> "" Then
+      KadNumberColInKadastr.Num = Val(GetIniKey)
+   End If
+   GetIniKey = IniReadString(FullINIFileName,"KadNumberColInKadastr","Name","")
+   if GetIniKey <> "" Then
+      KadNumberColInKadastr.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","Tolerance","0")
+   if GetIniKey <> "" Then
+      Tolerance = Val(GetIniKey)
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","EraseByKadastr","F")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+         EraseByKadastr = true
+       Else
+         EraseByKadastr = false
+       End If
+   End If
+
+End Sub
+
+
+Sub SaveIni
+    Dim PachApplicationMBX, FullINIFileName As String
+    Dim FormName, KeyString, ValueString As String
+    Dim SetIniKey As String
+
+    PachApplicationMBX = ApplicationDirectory$()
+    FullINIFileName = PachApplicationMBX + Left$(ApplicationName$(), Len(ApplicationName$()) - 4) + ".ini"
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(Debug))
+
+   SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Num",str$(TablePhotogrametry.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"TablePhotogrametry", "Name",str$(TablePhotogrametry.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Num",str$(TableOrthophoto.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"TableOrthophoto", "Name",str$(TableOrthophoto.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Num",str$(TableKadastr.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"TableKadastr", "Name",str$(TableKadastr.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Num",str$(KadNumberCol.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"KadNumberCol", "Name",str$(KadNumberCol.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Num",str$(InfringementCol.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"InfringementCol", "Name",str$(InfringementCol.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Num",str$(KadNumberColInKadastr.Num))
+   SetIniKey = IniWriteString(FullINIFileName,"KadNumberColInKadastr", "Name",str$(KadNumberColInKadastr.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры", "Tolerance",str$(Tolerance))
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","EraseByKadastr",str$(EraseByKadastr))
+End Sub
+
+
+Sub GetAndSetCoordSys(byval TableName as string, byval setType as string)
+    If tableinfo(TableName, TAB_INFO_MAPPABLE) = false Then
+       'Note "Таблица '" + TableName + "' не содержит графических объектов. Обработка остановлена."
+       Exit Sub
+    End If
+    realyCoordSys = SelectProjection(setType, TableName, FrontWindow())
+    'Note realyCoordSys
+    If realyCoordSys <> "Ошибка" Then
+       'Note "Результат: "  + realyCoordSys
+       run command "Set CoordSys " + realyCoordSys
+    Else
+       'Note "ошибка определения системы координат..."
+    end If
+    'Print realyCoordSys
+End Sub
+
+
+function SelectProjection(byval Metod as string, byval TableName as string, byval WinowsNumber as integer) As string
+   Dim realyTableName As string
+   Do Case Metod
+      Case "Объект"
+           If tableinfo(TableName, TAB_INFO_TEMP) Then
+              realyTableName = selectioninfo(SEL_INFO_TABLENAME)
+           Else
+               realyTableName = TableName
+           End If
+           realyCoordSys = WhatSystemOfCoordinates(realyTableName)
+      Case "Окно"
+           realyCoordSys = WhatSystemOfCoordinatesWindow(WinowsNumber)
+      Case "Выбор"
+
+      Case Else
+
+   End Case
+   SelectProjection = realyCoordSys
+End Function
+
+
+Sub myTablesComboBox1_OnClick
+dim col1, col2 as integer
+   If UBound(myTablesComboBox1_saLayers) > 0 Then
+      myTablesComboBox1_sTableName = myTablesComboBox1_saLayers(ReadControlValue(myTablesComboBox1))
+      'print "myTablesComboBox1_sTableName ="+myTablesComboBox1_sTableName
+      Call SelectTable(myTablesComboBox1_sTableName, TableColumns_1, TypeColumns_1, FullColumnsInfo_1)
+      Alter Control PopupMenu1 Title From Variable FullColumnsInfo_1
+      Alter Control PopupMenu1 Enable
+
+      col1 = ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1)
+      if col1 > 0 then
+         Alter Control PopupMenu1 Value col1
+      end if
+         if Debug then Print str$(ColNumber(KadNumberCol.Num, KadNumberCol.Name, TableColumns_1)) end if
+
+      Alter Control PopupMenu2 Title From Variable FullColumnsInfo_1
+      Alter Control PopupMenu2 Enable
+      col2 = ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1)
+      if col2 > 0 then
+         Alter Control PopupMenu2 Value Col2
+      end If
+         if Debug then Print str$(ColNumber(InfringementCol.Num, InfringementCol.Name, TableColumns_1)) end if
+   End If
+End Sub
+
+
+Sub myTablesComboBox2_OnClick
+   If UBound(myTablesComboBox2_saLayers) > 0 Then
+      myTablesComboBox2_sTableName = myTablesComboBox2_saLayers(ReadControlValue(myTablesComboBox2))
+      'print "myTablesComboBox2_sTableName ="+myTablesComboBox2_sTableName
+   End If
+End Sub
+
+
+Sub PopupMenu1_OnClick
+
+End Sub
+
+
+Sub PopupMenu2_OnClick
+
+End Sub
+
+
+
+Sub SelectTable(byval TableName as string, TableColumns(), TypeColumns(), FullColumnsInfo() As String)
+     Dim i_counter, j_counter, MaxLen, i_MaxLen, i  As Integer
+     Dim SpaceString As String
+         ReDim FullColumnsInfo(0)
+         ReDim TableColumns(0)
+         ReDim TypeColumns(0)
+         For i_counter = 1 to NumCols(TableName)
+             ReDim TableColumns(UBound(TableColumns)+1)
+             ReDim TypeColumns(UBound(TypeColumns)+1)
+             TableColumns(i_counter) = ColumnInfo(TableName,"COL"+i_counter,COL_INFO_NAME)
+             Do Case  ColumnInfo(TableName,"COL"+i_counter,COL_INFO_TYPE)
+                      Case COL_TYPE_CHAR
+                           TypeColumns(i_counter) = "Символьный"
+                      Case COL_TYPE_DECIMAL
+                           TypeColumns(i_counter) = "Десятичный"
+                      Case COL_TYPE_FLOAT
+                           TypeColumns(i_counter) = "Вещественный"
+                      Case COL_TYPE_INTEGER
+                           TypeColumns(i_counter) = "Целочисленный (4 байт)"
+                      Case COL_TYPE_SMALLINT
+                           TypeColumns(i_counter) = "Короткое целое число (2 байт)"
+                      Case COL_TYPE_DATE
+                           TypeColumns(i_counter) = "Дата"
+                      Case COL_TYPE_LOGICAL
+                           TypeColumns(i_counter) = "Логический"
+                      Case COL_TYPE_GRAPHIC
+                           TypeColumns(i_counter) = "Специальный тип колонки (Obj)"
+                      Case Else
+                           Note "Ошибка чтения таблицы " + TableName
+                           Exit Sub
+             End Case
+         Next
+         For i_counter = 1 to NumCols(TableName) - 1
+             i_MaxLen = Maximum(Len(TableColumns(i_counter)),Len(TableColumns(i_counter + 1)))
+             MaxLen = Maximum(MaxLen,i_MaxLen)
+         Next
+         For i_counter = 1 to NumCols(TableName)
+             ReDim FullColumnsInfo(UBound(FullColumnsInfo)+1)
+             SpaceString = ""
+             For j_counter = 1 to Fix((MaxLen - Len(TableColumns(i_counter)))*1.8)
+                 SpaceString = SpaceString + " "
+             Next
+             FullColumnsInfo(i_counter) = TableColumns(i_counter) + SpaceString + "  : " + TypeColumns(i_counter)
+         Next
+End Sub
+
+
+Sub PopupMenu_Kadastr_KadNum_OnClick
+
+End Sub
+
+
+Sub myTablesBox_Kadastr_OnClick
+   If UBound(myTablesBox_Kadastr_saLayers) > 0 Then
+      myTablesBox_Kadastr_sTableName = myTablesBox_Kadastr_saLayers(ReadControlValue(myTablesBox_Kadastr))
+      ' print "myTablesBox_Kadastr_sTableName ="+myTablesBox_Kadastr_sTableName
+      Call SelectTable(myTablesBox_Kadastr_sTableName, TableColumns_2, TypeColumns_2, FullColumnsInfo_2)
+      Alter Control PopupMenu_Kadastr_KadNum Title From Variable FullColumnsInfo_2
+      Alter Control PopupMenu_Kadastr_KadNum Enable
+   End If
+End Sub
+
+
+Function ColNumber(byval Num as integer, byval Name as string, ColList() as string) as integer
+dim iCol as integer
+   ' note "Num: " + str$(Num) + ", Name: " + Name + ", ColList: " + str$(UBound(ColList))
+   if Num > 0 then
+      for iCol = 1 to UBound(ColList)
+         if ColList(iCol) = Name then
+            ColNumber = iCol
+            Exit Function
+         end if
+      next
+   Else
+      ColNumber = 0
+   end if
+end function
+
+
+Function TableIsOpen(byval Name as string) as logical
+Dim i as integer
+
+   for i = 1 to NumTables()
+      if Debug then Print "Name: " + Name + ", TAB_INFO_NAME: " + TableInfo(i, TAB_INFO_NAME)        End If
+      if TableInfo(i, TAB_INFO_NAME) = Name then
+            TableIsOpen = true
+            Exit Function
+      End If
+   Next
+   TableIsOpen = false
+
+   if Debug then Print "Таблица " + Name + " не открыта."        End If
+End Function
+
+
+function isEqualTableStructure(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+Dim iColChekingTable, iColBaseTable as integer
+
+   redim isEqualCol(TableInfo(tableBase, TAB_INFO_NCOLS))
+
+   for iColBaseTable = 1 to TableInfo(tableBase, TAB_INFO_NCOLS)
+      isEqualCol(iColBaseTable) = false
+
+      if Debug then
+         Print "Проверяется таблица " + tableBase + " с базовой таблицей " + tableCheking
+      End If
+
+      for iColChekingTable = 1 to TableInfo(tableCheking, TAB_INFO_NCOLS)
+         if Debug then
+               Print "......поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " и " + ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)
+         End If
+
+         if UCase$(ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME)) = UCase$(ColumnInfo(tableCheking, "COL"+iColChekingTable, COL_INFO_NAME)) then
+               isEqualCol(iColBaseTable) = true
+               exit for
+         end if
+      Next
+   next
+
+   isEqualTableStructure = true
+   for iColBaseTable = 1 to UBound(isEqualCol)
+      if isEqualCol(iColBaseTable) = false then
+         isEqualTableStructure = false
+         'exit function
+         if Debug then Print "Поля " + ColumnInfo(tableBase, "COL"+iColBaseTable, COL_INFO_NAME) + " в таблице " + tableBase + " нет." end if
+      End If
+   Next
+end function
+
+
+function reStructureTable(byval tableBase, tableCheking as string, isEqualCol() as logical) as logical
+dim iCol, iLayer as integer
+dim columnname, columntype, runString as string
+dim layerInMap, colsAdded as logical
+   layerInMap = false
+   for iLayer = 1 to MapperInfo(FrontWindow(), MAPPER_INFO_LAYERS)
+      if tableCheking = LayerInfo(FrontWindow(), iLayer, LAYER_INFO_NAME) then
+         layerInMap = true
+      end if
+   next
+
+   for iCol = 1 to UBound(isEqualCol)
+      if not isEqualCol(iCol) then
+         if Debug then Print "Name: " + TableColumns_1(iCol) + ", type: " + TypeColumns_1(iCol) end if
+
+         colsAdded = getColType(tableBase, iCol, columnname, columntype)
+
+         if colsAdded then
+            runString = "Alter Table " + tableCheking + " (Add " + columnname + " " + columntype + ") Interactive"
+         end If
+
+         if Debug then Print runString end if
+
+         OnError Goto badAddindColumns
+            Run Command runString
+         OnError Goto 0
+         reStructureTable = true
+      end if
+   next
+
+   if layerInMap and colsAdded then
+      Add Map Layer tableCheking
+   end if
+
+   after_badAddindColumns:
+      Exit function
+
+   badAddindColumns:
+      reStructureTable = false
+      Note "Ошибка при добавлении поля " + TableColumns_1(iCol) + " в таблицу " + tableCheking + ". Возможно таблица не сохранена. Обработка остановлена."
+      resume after_badAddindColumns
+end function
+
+
+function getColType(byval table as string, byval col as integer, colname as string, coltype as string) as logical
+   getColType = false
+
+   colname = ColumnInfo(table, "COL"+col, COL_INFO_NAME)
+
+   do case ColumnInfo(table, "COL"+col, COL_INFO_TYPE)
+      case COL_TYPE_CHAR
+         coltype = "Char(" + ColumnInfo(table, "COL"+col, COL_INFO_WIDTH) + ")"
+      case COL_TYPE_DECIMAL
+         coltype = "Decimal(" + ColumnInfo(table, "COL"+col, COL_INFO_WIDTH) + "," + ColumnInfo(table, "COL"+col, COL_INFO_DECPLACES) + ")"
+      case COL_TYPE_INTEGER
+         coltype = "Integer"
+      case COL_TYPE_SMALLINT
+         coltype = "SmallInt"
+      case COL_TYPE_DATE
+         coltype = "Date"
+      case COL_TYPE_LOGICAL
+         coltype = "Logical"
+      case COL_TYPE_GRAPHIC
+         coltype = "obj"
+      case COL_TYPE_FLOAT
+         coltype = "Float"
+      case COL_TYPE_TIME
+         coltype = "Time"
+      case COL_TYPE_DATETIME
+         coltype = "DateTime"
+   end case
+
+   getColType = true
+end function
+
+
+function getColNumber(byval table as string, byval colName as string) as integer
+dim iCol as integer
+
+   for iCol = 1 to TableInfo(table, TAB_INFO_NCOLS)
+      if UCase$(colName) = UCase$(ColumnInfo(table, "COL"+iCol, COL_INFO_NAME)) then
+         getColNumber = iCol
+         Exit function
+      end if
+   next
+
+end function
+
+
+function CopyFieldValue(byval sourceName as string, byval receiverName as string, byval UpdateColumnNumber as integer) as logical
+dim currentCol as integer
+        select * from sourceName into source noselect
+        select * from receiverName into receiver noselect
+
+   currentCol = getColNumber(receiver, ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_NAME))
+
+   OnError Goto badUpdate
+   do case ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_TYPE)
+      case COL_TYPE_CHAR
+         dim valStr as string
+         valStr = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valStr
+      case COL_TYPE_DECIMAL
+         dim valDecimal as float
+         valDecimal = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDecimal
+      case COL_TYPE_INTEGER
+         dim valInteger as integer
+         valInteger = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valInteger
+      case COL_TYPE_SMALLINT
+         dim valSmallInt as SmallInt
+         valSmallInt = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valSmallInt
+      case COL_TYPE_DATE
+         dim valDate as Date
+         valDate = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDate
+      case COL_TYPE_LOGICAL
+         dim vallogical as logical
+         vallogical = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = vallogical
+      ' case COL_TYPE_GRAPHIC
+      '    dim valObject as object
+      '    valObject = source.COL(UpdateColumnNumber)
+      '    Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valObject
+      case COL_TYPE_FLOAT
+         dim valFloat as float
+         valFloat = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valFloat
+      case COL_TYPE_TIME
+         dim valTime as Time
+         valTime = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valTime
+      case COL_TYPE_DATETIME
+         dim valDateTime as DateTime
+         valDateTime = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDateTime
+      case else
+         if Debug then Print "Встретился неизвесный тип поля: " + str$(ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_TYPE)) end if
+   end case
+
+   Close Table receiver
+   Close Table source
+
+   CopyFieldValue = true
+
+   after_badUpdate:
+   Exit Function
+
+   badUpdate:
+      CopyFieldValue = false
+      resume after_badUpdate
+
+end function
+
+
+function CopyFieldValueAndConcat(byval sourceName as string, byval receiverName as string, byval UpdateColumnNumber as integer) as logical
+dim currentCol as integer
+
+   select * from sourceName into source noselect
+   select * from receiverName into receiver noselect
+
+   currentCol = getColNumber(receiver, ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_NAME))
+
+   OnError Goto badUpdate
+   do case ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_TYPE)
+      case COL_TYPE_CHAR
+         dim valStr as string
+         dim arrayStr(0), sumStr as string
+         dim iCount, arrayLen as integer
+         dim exists as logical
+
+         ReDim arrayStr(0)
+
+         Fetch First From source
+         Do While Not EOT(source)
+            valStr = source.COL(UpdateColumnNumber)
+
+            exists = false
+            for iCount = 1 to UBound(arrayStr)
+               if arrayStr(iCount) = valStr then
+                  exists = true
+                  exit for
+               else
+                  exists = false
+               end if
+            next
+
+            if not exists then
+               arraylen = UBound(arrayStr)
+               redim arrayStr(arrayLen + 1)
+               arrayStr(arrayLen + 1) = valStr
+               if (arrayLen + 1) > 1 then
+                  sumStr = sumStr + " " + arrayStr(arrayLen + 1)
+               else
+                  sumStr = arrayStr(arrayLen + 1)
+               end if
+            end if
+
+            Fetch Next From source
+         Loop
+
+         valStr = sumStr
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valStr
+      case COL_TYPE_DECIMAL
+         dim valDecimal as float
+         valDecimal = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDecimal
+      case COL_TYPE_INTEGER
+         dim valInteger as integer
+         valInteger = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valInteger
+      case COL_TYPE_SMALLINT
+         dim valSmallInt as SmallInt
+         valSmallInt = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valSmallInt
+      case COL_TYPE_DATE
+         dim valDate as Date
+         valDate = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDate
+      case COL_TYPE_LOGICAL
+         dim vallogical as logical
+         vallogical = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = vallogical
+      ' case COL_TYPE_GRAPHIC
+      '    dim valObject as object
+      '    valObject = source.COL(UpdateColumnNumber)
+      '    Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valObject
+      case COL_TYPE_FLOAT
+         dim valFloat as float
+         valFloat = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valFloat
+      case COL_TYPE_TIME
+         dim valTime as Time
+         valTime = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valTime
+      case COL_TYPE_DATETIME
+         dim valDateTime as DateTime
+         valDateTime = source.COL(UpdateColumnNumber)
+         Update receiver Set ColumnInfo(receiver, "COL"+currentCol, COL_INFO_NAME) = valDateTime
+      case else
+         if Debug then Print "Встретился неизвесный тип поля: " + str$(ColumnInfo(source, "COL"+UpdateColumnNumber, COL_INFO_TYPE)) end if
+   end case
+
+   Close Table receiver
+   Close Table source
+
+   CopyFieldValueAndConcat = true
+
+   after_badUpdate:
+   Exit Function
+
+   badUpdate:
+      CopyFieldValueAndConcat = false
+      resume after_badUpdate
+
+end function
+
+
+Sub Dialog1btnEraseOnly_OnClick
+   UpdateFields = false ' При нажатии на эту кнопку, обновлять поля таблицы не обновлять.
+   EraseByKadastrOnce = true ' При нажатии ни эту кнопку обрезать по кадастру.
+
+   call Dialog1btnOK_OnClick
+   Dialog Remove
+End Sub
+
+
+Sub Dialog1CBoxEraseKadastr_OnClick
+
+End Sub
+
+
+function prepareInfrigement(byval str as string) as string
+dim twoChar, sumStr as string
+dim twoChars(0) as string
+dim iCount, arrayLen as integer
+dim exists as logical
+
+   prepareInfrigement = str
+   sumStr = ""
+
+   redim twoChars(0)
+   Do While (len(str) > 0)
+      twoChar = Left$(str, 2)
+
+      if Debug then Print "twoStr: " + twoChar + ", str: " + str end if
+
+      exists = false
+      for iCount = 1 to UBound(twoChars)
+         if twoChars(iCount) = twoChar then
+            exists = true
+            exit for
+         else
+            exists = false
+         end If
+      next
+
+      if not exists then
+         arrayLen = UBound(twoChars)
+         ReDim twoChars(arrayLen + 1)
+         twoChars(arrayLen + 1) = twoChar
+
+         sumStr = sumStr + twoChars(arrayLen + 1)
+      end if
+
+      str = Right$(str, len(str) - 2)
+   Loop
+   prepareInfrigement = sumStr
+end function
+
+
+function ErasePhotoByKadastr(byval photoObj as object, byval kadastTable as string) as object
+   dim source_object, eraser_object as object
+
+   select * from kadastTable into eraser_objects_table noselect
+
+   source_object = photoObj
+
+   if TableInfo(eraser_objects_table, TAB_INFO_NROWS) > 0 then
+      Fetch First From eraser_objects_table
+      Do While Not EOT(eraser_objects_table)
+         eraser_object = eraser_objects_table.obj
+         source_object = Erase(source_object, eraser_object)
+         if Debug then Print "=== Режем объект фотограмметристов объектом из кадастра." end if
+         Fetch Next From eraser_objects_table
+      Loop
+      ErasePhotoByKadastr = source_object
+   else
+      ErasePhotoByKadastr = photoObj
+   end If
+
+   Close table eraser_objects_table
+end function
+
+
+function checkAreaOverlap(byval table as string, byval checkObject as object) as integer
+' Возвращает -1 если нет только одного не нулевого пересечения, иначе возвращает номер строки
+' с единственным не нулевым пересечением
+dim iRow, notNullLen as integer
+dim notNull(0) as integer
+dim tableObj as object
+
+   Redim notNull(0)
+   iRow = 1
+
+   select * from table into localSel noselect
+
+   Fetch First From localSel
+   Do while Not EOT(localSel)
+      tableObj = localSel.obj
+      if AreaOverlap(checkObject, tableObj) > 0  then
+         notNullLen = UBound(notNull)
+         redim notNull(notNullLen + 1)
+         notNull(notNullLen + 1) = notNullLen + 1
+      end if
+      Fetch Next From localSel
+      iRow = iRow + 1
+   Loop
+
+   if UBound(notNull) <> 1 then
+      checkAreaOverlap = -1
+   else
+      checkAreaOverlap = notNull(1)
+   end If
+
+   if Debug then Print "Пересечений с не нулевой площадью: " + str$(UBound(notNull)) end if
+end function
+
+
+Sub Dialog1btnTestKadNumber_OnClick
+   UpdateFields = false ' При нажатии на эту кнопку, обновлять поля таблицы не обновлять.
+   EraseByKadastrOnce = false ' При нажатии ни эту кнопку не обрезать по кадастру.
+   CheckKadNumber = true ' При нажании на эту кнопку выполнить тестирование на адекватность кадастрового номера
+
+   call Dialog1btnOK_OnClick
+   Dialog Remove
+End Sub
+
+
+function checkKadNumberFromOverlap(byval checkObject as object, byval kadNumber as string, byval kadastrTable as string, byval ColumnKadNumber as integer) as logical
+dim iCount as integer
+dim intInfo(0) as IntersectInfo
+dim kadArea as object
+dim AreaMaxOverlap as float
+dim NumberMaxOverlap as integer
+
+   select * from kadastrTable into kadastrTable_tmp noselect
+
+   if Debug then Print "Пересечений с кадастром: " + str$(Tableinfo(kadastrTable_tmp, TAB_INFO_NROWS)) end if
+
+   Redim intInfo(Tableinfo(kadastrTable_tmp, TAB_INFO_NROWS))
+   checkKadNumberFromOverlap = false
+   iCount = 1
+
+   Fetch First From kadastrTable_tmp
+   Do While Not EOT(kadastrTable_tmp)
+      intInfo(iCount).kadNum = kadastrTable_tmp.COL(ColumnKadNumber)
+      kadArea = kadastrTable_tmp.obj
+
+      if intInfo(iCount).kadNum = kadNumber then
+         intInfo(iCount).coincidenceKN = true
+      else
+         intInfo(iCount).coincidenceKN = false
+      end if
+
+      Set Area Units "sq m"
+      intInfo(iCount).areaValue = AreaOverlap(checkObject, kadArea)
+
+      if Debug then Print "Кад. номер объекта: " + kadNumber + ", кад. номер в кадастре: " + intInfo(iCount).kadNum end if
+
+      iCount = iCount + 1
+      Fetch Next From kadastrTable_tmp
+   Loop
+
+   close table kadastrTable_tmp
+
+   AreaMaxOverlap = 0
+   NumberMaxOverlap = 0
+
+   if UBound(intInfo) < 1 then
+      checkKadNumberFromOverlap = false
+      exit function
+   end if
+
+   for iCount = 1 to UBound(intInfo)
+      if Debug then Print "intInfo(" + str$(iCount) + ").coincidenceKN: " + str$(intInfo(iCount).coincidenceKN) + ", intInfo(" + str$(iCount) + ").areaValue: " + str$(intInfo(iCount).areaValue) end if
+
+      if intInfo(iCount).areaValue >= AreaMaxOverlap then
+         AreaMaxOverlap = intInfo(iCount).areaValue
+         NumberMaxOverlap = iCount
+      end if
+   next
+
+   if (intInfo(NumberMaxOverlap).kadNum = kadNumber) and intInfo(NumberMaxOverlap).coincidenceKN then
+      if intInfo(NumberMaxOverlap).areaValue >= Tolerance then
+         checkKadNumberFromOverlap = true
+      end if
+   end if
+end function

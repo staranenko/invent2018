@@ -6,9 +6,12 @@
 '////////////////////////////////////////
 Define	menuMain	1000	
 Define	MenuItemMatchingPlot	1001	
-Define	MenuItemAbout	1002	
-Define	menuSeparator1	1003	
-Define	menuExit	1004	
+Define	MenuItemNearAreas	1002	
+Define	MenuItemFillUpks	1003	
+Define	MenuItemSettings	1004	
+Define	MenuItemAbout	1005	
+Define	menuSeparator1	1006	
+Define	menuExit	1007	
 
 '//MB Program Handlers Declaration
 Declare Sub Main
@@ -16,5 +19,8 @@ Declare Sub BeforeMenuCreate
 Declare Sub AfterMenuCreate
 '//Menu Items Handlers Declaration
 Declare Sub MenuItemMatchingPlot_OnClick
+Declare Sub MenuItemNearAreas_OnClick
+Declare Sub MenuItemFillUpks_OnClick
+Declare Sub MenuItemSettings_OnClick
 Declare Sub MenuItemAbout_OnClick
 Declare Sub menuExit_OnClick

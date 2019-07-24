@@ -2,8 +2,10 @@
 '//{$DLG_CTRLS&SUBS_DEF}
 
 '//Dialog Controls IDs
-Define   Dialog1btnOK   1
-Define   Dialog1btnCancel   2
+Define   DialogSettingsbtnOK   1
+Define   DialogSettingsbtnCancel   2
+Define   DialogSettingsShowDebug   3
+Define   DialogSettingsStaticText1   4
 
 '//Dialog DialogSettings Handlers Declaration
 Declare Sub DialogSettings_Execute
@@ -12,5 +14,6 @@ Declare Sub DialogSettings_OnOKModalResult
 Declare Sub DialogSettings_OnCancelModalResult
 
 '//Controls Handlers Declaration
-Declare Sub Dialog1btnOK_OnClick
-Declare Sub Dialog1btnCancel_OnClick
+Declare Sub DialogSettingsbtnOK_OnClick
+Declare Sub DialogSettingsbtnCancel_OnClick
+Declare Sub DialogSettingsShowDebug_OnClick

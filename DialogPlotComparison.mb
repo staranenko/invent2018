@@ -1,0 +1,181 @@
+'Не редактируйте этот файл, так как MBBuilder автоматически его генерирует!
+'//{$DLG DialogPlotComparison}
+Include "MapBasic.def"
+Include "DialogPlotComparison.def"
+Sub DialogPlotComparison_Execute
+
+Dialog
+ Title "Сопоставление участков - v1.2"
+ Width 383 Height 266
+ Calling DialogPlotComparison_OnShow
+'//{$Controls}
+   Control OKButton
+     ID Dialog1btnOK
+     Title "Сопоставить участки"
+     Position 233, 244
+     Width 87 Height 15
+     Calling Dialog1btnOK_OnClick
+'//{$Control End}
+   Control CancelButton
+     ID Dialog1btnCancel
+     Title "Отмена"
+     Position 325, 244
+     Width 50 Height 15
+     Calling Dialog1btnCancel_OnClick
+'//{$Control End}
+   Control StaticText
+     ID StaticText1
+     Title "________________________________________________________________________________________________________"
+     Position 3, 231
+     Width 376 Height 8
+'//{$Control End}
+   Control PopupMenu
+     ID myTablesComboBox1
+     Title ""
+     Position 50, 65
+     Width 321 Height 13
+     Value 0
+     Calling myTablesComboBox1_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID myTablesComboBox2
+     Title ""
+     Position 50, 21
+     Width 321 Height 13
+     Value 0
+     Calling myTablesComboBox2_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID PopupMenu1
+     Title ""
+     Position 128, 84
+     Width 243 Height 13
+     Value 0
+     Calling PopupMenu1_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID PopupMenu2
+     Title ""
+     Position 128, 102
+     Width 243 Height 13
+     Value 0
+     Calling PopupMenu2_OnClick
+'//{$Control End}
+   Control EditText
+     ID EditTextTolerance
+     Value "EditTextTolerance"
+     Position 128, 182
+     Width 52 Height 13
+'//{$Control End}
+   Control StaticText
+     ID StaticText2
+     Title "Таблица"
+     Position 12, 67
+     Width 35 Height 8
+'//{$Control End}
+   Control StaticText
+     ID StaticText3
+     Title "Поле с кадастровым номером"
+     Position 12, 86
+     Width 111 Height 8
+'//{$Control End}
+   Control StaticText
+     ID StaticText4
+     Title "Поле с нарушением"
+     Position 12, 105
+     Width 114 Height 8
+'//{$Control End}
+   Control StaticText
+     ID StaticText5
+     Title "Таблица"
+     Position 12, 23
+     Width 35 Height 8
+'//{$Control End}
+   Control StaticText
+     ID StaticText6
+     Title "Мин. площадь пересечения"
+     Position 12, 184
+     Width 109 Height 8
+'//{$Control End}
+   Control GroupBox
+     Position 5, 52
+     Width 372 Height 73
+     ID GroupBox1
+     Title "Участки с нарушениями"
+'//{$Control End}
+   Control GroupBox
+     Position 5, 4
+     Width 372 Height 41
+     ID GroupBox2
+     Title "Участки от фотограмметристов"
+'//{$Control End}
+   Control StaticText
+     ID StaticText7
+     Title "м.кв. (используется при проверке кад. номеров)"
+     Position 186, 184
+     Width 185 Height 8
+'//{$Control End}
+   Control GroupBox
+     Position 5, 131
+     Width 372 Height 74
+     ID GroupBox3
+     Title "Участки с кадастром"
+'//{$Control End}
+   Control StaticText
+     ID StaticText9
+     Title "Поле с кадастровым номером"
+     Position 12, 165
+     Width 115 Height 8
+'//{$Control End}
+   Control StaticText
+     ID StaticText10
+     Title "Таблица"
+     Position 12, 146
+     Width 35 Height 8
+'//{$Control End}
+   Control PopupMenu
+     ID PopupMenu_Kadastr_KadNum
+     Title ""
+     Position 128, 163
+     Width 243 Height 13
+     Value 0
+     Calling PopupMenu_Kadastr_KadNum_OnClick
+'//{$Control End}
+   Control PopupMenu
+     ID myTablesBox_Kadastr
+     Title ""
+     Position 50, 143
+     Width 321 Height 13
+     Value 0
+     Calling myTablesBox_Kadastr_OnClick
+'//{$Control End}
+   Control Button
+     ID Dialog1btnEraseOnly
+     Title "Обрезать кадастром"
+     Position 5, 244
+     Width 84 Height 15
+     Calling Dialog1btnEraseOnly_OnClick
+'//{$Control End}
+   Control CheckBox
+     ID Dialog1CBoxEraseKadastr
+     Title "Обрезать кадастром при сопоставлении"
+     Position 11, 216
+     Width 159 Height 8
+     Value 0
+     Calling Dialog1CBoxEraseKadastr_OnClick
+'//{$Control End}
+   Control Button
+     ID Dialog1btnTestKadNumber
+     Title "Проверить кад. номера"
+     Position 94, 244
+     Width 93 Height 15
+     Calling Dialog1btnTestKadNumber_OnClick
+'//{$Control End}
+
+If CommandInfo(CMD_INFO_DLG_OK) = 1 Then
+   call DialogPlotComparison_OnOKModalResult
+Else 
+   call DialogPlotComparison_OnCancelModalResult
+End If
+
+End Sub
