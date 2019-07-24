@@ -1,5 +1,5 @@
 Dialog
- Title "Удаленность участков - v0.1"
+ Title "Удаленность участков - v1.0"
  Width 505 Height 375
  Position 603, 271
  Calling DialogNearAreas_OnShow

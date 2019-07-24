@@ -47,6 +47,8 @@ Declare Sub GetAndSetCoordSysNear(byval TableName as string, byval setType as st
 Declare Function WhatSystemOfCoordinatesNear(byval TablesName as string) as string
 Declare Function WhatSystemOfCoordinatesWindowNear(byval WindowName as integer) as string
 
+Declare Function CreateTable() As string
+
 Global Debug As logical
 
 Type ListInfo
@@ -71,6 +73,13 @@ dim field_reciver_distance as ListInfo
 dim field_reciver_angle as ListInfo
 dim settings_reciver_utits_distance as ListInfo  ' Num для номера, Name для текста типа "m"
 dim settings_reciver_utits_angle as ListInfo  ' Num для номера, Name для текста типа "Румб"
+
+dim round_units_distance as string
+dim round_units_distance_m as string
+dim round_units_distance_km as string
+dim round_units_angle as string
+
+dim result_table as string
 
 Sub DialogNearAreas_OnShow
    Call LoadIniNear
@@ -139,8 +148,19 @@ Sub DNA_btnOK_OnClick
    MsgString = "Расчет УПКС..."
 
    select * from table_reciver into work_table_reciver noselect
+   select * from work_table_reciver where work_table_reciver.COL(field_reciver_address.Num) = "" into work_table_reciver noselect
+
+   if Debug then Print "Будет обработано " + str$(TableInfo(work_table_reciver, TAB_INFO_NROWS)) + " строк." end if
+
    select * from table_source into work_table_source noselect
 
+   if Debug then Print "Поиск выполняетя в таблице с " + str$(TableInfo(work_table_source, TAB_INFO_NROWS)) + " строками." end if
+
+   Call GetAndSetCoordSysNear(table_reciver, "Объект")
+   result_table = CreateTable()
+   result_table = PathToTableName$(result_table)
+   if Debug then print "result_table: " + result_table end if
+   
    next_row = 1
 
    ProgressBar MsgString Calling MainThreadNear Range TableInfo(work_table_reciver, TAB_INFO_NROWS)
@@ -151,32 +171,74 @@ Sub DNA_btnOK_OnClick
    Else
       Note "Операция прервана."
       dialog preserve
-      ' Goto end_sub
    End If
 
    close table work_table_reciver
    close table work_table_source
+   
+   Rollback Table result_table
+   Drop Table result_table
 End Sub
 
 
 Sub MainThreadNear
    dim start_time as float
+   dim firstX, firstY, secondX, secondY, angle, direction, distance, distance_placeholder as float
+   dim angle_str, direction_str as string
+   dim address as string
 
    start_time = Timer()
 
    Fetch Rec next_row From work_table_reciver
    Do While Not EOT(work_table_reciver) And Timer( ) - start_time < 2
-      if Debug then print "String " + str$(next_row) end If
+      if Debug then print "Object " + str$(next_row) end If
 
       select * from work_table_reciver where rowid = next_row into one_row_reciver noselect
 
-      Nearest from table one_row_reciver to work_table_source into "result" 'units settings_reciver_utits_distance.Name
+      Nearest From Table one_row_reciver To work_table_source Into result_table Data COL1 = work_table_source.COL(field_source_address.Num), COL2 = work_table_source.rowid
+      select * from result_table into result_table_tmp
 
-      ' Close table result
+      Fetch Last From result_table_tmp
 
-   Fetch Next From work_table_reciver
+      address = result_table_tmp.COL1
+      distance = Objectlen(result_table_tmp.obj, settings_reciver_utits_distance.Name)
+      
+      if distance > 0 then
+         firstX = ObjectNodeX(result_table_tmp.obj, 1, 1)
+         firstY = ObjectNodeY(result_table_tmp.obj, 1, 1)
+         secondX = ObjectNodeX(result_table_tmp.obj, 1, 2)
+         secondY = ObjectNodeY(result_table_tmp.obj, 1, 2)
+      else
+         firstX = CentroidX(one_row_reciver.obj)
+         firstY = CentroidY(one_row_reciver.obj)
+         secondX = ObjectNodeX(result_table_tmp.obj, 1, 2)
+         secondY = ObjectNodeY(result_table_tmp.obj, 1, 2)
+      end if
+
+      Do case settings_reciver_utits_angle.Name
+         case "DirAngle"
+            Call DirAngle(firstY, secondY, firstX, secondX, angle, distance_placeholder)
+            angle = CorrectAngle(angle)
+            direction_str = AngleToStringFromGrad(angle, len(round_units_angle) - 1)
+         case "Rumb"
+            Call RumbAngle(firstY, secondY, firstX, secondX, direction, distance_placeholder, direction_str)
+            direction_str = direction_str + AngleToStringFromGrad(direction, len(round_units_angle) - 1)
+      end case
+
+
+      if Debug then
+         print "distance: " + str$(distance) + ", firstX: " + str$(firstX) + ", firstY: " + str$(firstY) + ", secondX: " + str$(secondX) + ", secondY: " + str$(secondY)
+         print "direction_str: " + direction_str + ", address: " + address
+      end if 
+
+      update one_row_reciver set "COL"+field_reciver_address.Num = address, "COL"+field_reciver_distance.Num = Round(distance, val(round_units_distance)), "COL"+field_reciver_angle.Num = direction_str
+
+      close table result_table_tmp
+      Rollback table result_table
+
+      Fetch Next From work_table_reciver
       next_row = next_row + 1
-      ' close table work_one_row
+      close table one_row_reciver
    Loop
 
    If next_row > TableInfo(work_table_reciver, TAB_INFO_NROWS) Then
@@ -270,6 +332,14 @@ Sub GetDialogElementsNear
          settings_reciver_utits_angle.Name = "Rumb"
    end case
 
+   Do Case settings_reciver_utits_distance.Name
+      case "m" round_units_distance = round_units_distance_m
+      case "km" round_units_distance = round_units_distance_km
+      case else round_units_distance = "0"
+   end case
+
+   if round_units_angle = "" then round_units_angle = "10" end if 
+
    if Debug Then
       Print "table_source: " + table_source
       Print "field_source_address.Num: " + str$(field_source_address.Num)
@@ -288,6 +358,9 @@ Sub GetDialogElementsNear
 
       Print "settings_reciver_utits_angle.Num: " + str$(settings_reciver_utits_angle.Num)
       Print "settings_reciver_utits_angle.Name: " + settings_reciver_utits_angle.Name
+
+      Print "round_units_distance: " + str$(round_units_distance)
+      Print "round_units_angle: " + str$(round_units_angle)
    End if
 End Sub
 
@@ -432,6 +505,21 @@ Sub LoadIniNear
    GetIniKey = IniReadString(FullINIFileName,"settings_reciver_utits_angle","Name","")
    if GetIniKey <> "" Then
       settings_reciver_utits_angle.Name = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"round_units","M","0")
+   if GetIniKey <> "" Then
+      round_units_distance_m = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"round_units","KM","0")
+   if GetIniKey <> "" Then
+      round_units_distance_km = GetIniKey
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"round_units","Angle","10")
+   if GetIniKey <> "" Then
+      round_units_angle = GetIniKey
    End If
 End Sub
 
@@ -628,4 +716,18 @@ Dim i as integer
    TableIsOpenNear = false
 
    if Debug then Print "Таблица " + Name + " не открыта."        End If
+End Function
+
+
+Function CreateTable() As string
+    Dim NameTable, CommandString As string
+    NameTable = TempFileName$("")
+    NameTable = Left$(NameTable,len(NameTable)-4)+"_result"+".tab"
+    Create Table PathToTableName$(NameTable) (Address Char(250), NumRow Integer) File NameTable
+
+    CommandString = "Create Map For " + PathToTableName$(NameTable) + " " + "CoordSys " + realyCoordSys
+    if Debug then print "Создание временной таблицы: " + CommandString end if
+    Run Command CommandString
+
+    CreateTable = NameTable
 End Function
