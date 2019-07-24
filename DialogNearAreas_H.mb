@@ -138,13 +138,14 @@ Sub DNA_btnOK_OnClick
 
    MsgString = "Расчет УПКС..."
 
-   select * from table_reciver into work_table noselect
+   select * from table_reciver into work_table_reciver noselect
+   select * from table_source into work_table_source noselect
 
    next_row = 1
 
-   ProgressBar MsgString Calling MainThreadNear Range TableInfo(work_table, TAB_INFO_NROWS)
+   ProgressBar MsgString Calling MainThreadNear Range TableInfo(work_table_reciver, TAB_INFO_NROWS)
    If CommandInfo(CMD_INFO_STATUS) Then
-      if TableInfo(work_table, TAB_INFO_NROWS) > 20 then
+      if TableInfo(work_table_reciver, TAB_INFO_NROWS) > 20 then
          Note "Расчет завершен! Спасибо за терпение."
       end If
    Else
@@ -152,7 +153,9 @@ Sub DNA_btnOK_OnClick
       dialog preserve
       ' Goto end_sub
    End If
-   close table work_table
+
+   close table work_table_reciver
+   close table work_table_source
 End Sub
 
 
@@ -161,18 +164,22 @@ Sub MainThreadNear
 
    start_time = Timer()
 
-   Fetch Rec next_row From work_table
-   Do While Not EOT(work_table) And Timer( ) - start_time < 2
+   Fetch Rec next_row From work_table_reciver
+   Do While Not EOT(work_table_reciver) And Timer( ) - start_time < 2
       if Debug then print "String " + str$(next_row) end If
 
+      select * from work_table_reciver where rowid = next_row into one_row_reciver noselect
 
+      Nearest from table one_row_reciver to work_table_source into "result" 'units settings_reciver_utits_distance.Name
 
-   Fetch Next From work_table
+      ' Close table result
+
+   Fetch Next From work_table_reciver
       next_row = next_row + 1
       ' close table work_one_row
    Loop
 
-   If next_row > TableInfo(work_table, TAB_INFO_NROWS) Then
+   If next_row > TableInfo(work_table_reciver, TAB_INFO_NROWS) Then
       ProgressBar = -1 ' сообщить "Готово!"
    Else
       ProgressBar = next_row ' сообщить "Прервано."
