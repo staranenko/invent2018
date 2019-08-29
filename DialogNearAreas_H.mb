@@ -81,6 +81,8 @@ dim round_units_angle as string
 
 dim result_table as string
 
+Dim reverseCoordinate, updateOnlyEmpty as logical
+
 Sub DialogNearAreas_OnShow
    Call LoadIniNear
 
@@ -145,10 +147,13 @@ Sub DNA_btnOK_OnClick
    Call GetDialogElementsNear
    Call SaveIniNear
 
-   MsgString = "Расчет УПКС..."
+   MsgString = "Расчет направлений и удаленности..."
 
    select * from table_reciver into work_table_reciver noselect
-   select * from work_table_reciver where work_table_reciver.COL(field_reciver_address.Num) = "" into work_table_reciver noselect
+
+   if updateOnlyEmpty then
+      select * from work_table_reciver where work_table_reciver.COL(field_reciver_address.Num) = "" into work_table_reciver noselect
+   end if
 
    if Debug then Print "Будет обработано " + str$(TableInfo(work_table_reciver, TAB_INFO_NROWS)) + " строк." end if
 
@@ -160,7 +165,7 @@ Sub DNA_btnOK_OnClick
    result_table = CreateTable()
    result_table = PathToTableName$(result_table)
    if Debug then print "result_table: " + result_table end if
-   
+
    next_row = 1
 
    ProgressBar MsgString Calling MainThreadNear Range TableInfo(work_table_reciver, TAB_INFO_NROWS)
@@ -175,7 +180,7 @@ Sub DNA_btnOK_OnClick
 
    close table work_table_reciver
    close table work_table_source
-   
+
    Rollback Table result_table
    Drop Table result_table
 End Sub
@@ -186,6 +191,7 @@ Sub MainThreadNear
    dim firstX, firstY, secondX, secondY, angle, direction, distance, distance_placeholder as float
    dim angle_str, direction_str as string
    dim address as string
+   dim tmpX, tmpY as float
 
    start_time = Timer()
 
@@ -202,7 +208,7 @@ Sub MainThreadNear
 
       address = result_table_tmp.COL1
       distance = Objectlen(result_table_tmp.obj, settings_reciver_utits_distance.Name)
-      
+
       if distance > 0 then
          firstX = ObjectNodeX(result_table_tmp.obj, 1, 1)
          firstY = ObjectNodeY(result_table_tmp.obj, 1, 1)
@@ -213,6 +219,16 @@ Sub MainThreadNear
          firstY = CentroidY(one_row_reciver.obj)
          secondX = ObjectNodeX(result_table_tmp.obj, 1, 2)
          secondY = ObjectNodeY(result_table_tmp.obj, 1, 2)
+      end if
+
+      if reverseCoordinate then
+         tmpX = secondX
+         secondX = firstX
+         firstX = tmpX
+
+         tmpY = secondY
+         secondY = firstY
+         firstY = tmpY
       end if
 
       Do case settings_reciver_utits_angle.Name
@@ -229,7 +245,7 @@ Sub MainThreadNear
       if Debug then
          print "distance: " + str$(distance) + ", firstX: " + str$(firstX) + ", firstY: " + str$(firstY) + ", secondX: " + str$(secondX) + ", secondY: " + str$(secondY)
          print "direction_str: " + direction_str + ", address: " + address
-      end if 
+      end if
 
       update one_row_reciver set "COL"+field_reciver_address.Num = address, "COL"+field_reciver_distance.Num = Round(distance, val(round_units_distance)), "COL"+field_reciver_angle.Num = direction_str
 
@@ -338,7 +354,10 @@ Sub GetDialogElementsNear
       case else round_units_distance = "0"
    end case
 
-   if round_units_angle = "" then round_units_angle = "10" end if 
+   if round_units_angle = "" then round_units_angle = "10" end if
+
+   updateOnlyEmpty = ReadControlValue(DNA_OnlyEmpty)
+   reverseCoordinate = ReadControlValue(DNA_reverseLine)
 
    if Debug Then
       Print "table_source: " + table_source
@@ -361,6 +380,9 @@ Sub GetDialogElementsNear
 
       Print "round_units_distance: " + str$(round_units_distance)
       Print "round_units_angle: " + str$(round_units_angle)
+
+      Print "updateOnlyEmpty: " + str$(updateOnlyEmpty)
+      Print "reverseCoordinate: " + str$(reverseCoordinate)
    End if
 End Sub
 
@@ -411,7 +433,7 @@ Sub SetDialogElementsNear
                   if (ColNum > 0 and ColNum <= TableInfo(table_reciver, TAB_INFO_NCOLS)) then Alter Control DNA_FieldAngle Value ColNum end if
                end if
             end if
-            
+
          end if
       next
    end if
@@ -423,6 +445,9 @@ Sub SetDialogElementsNear
    if settings_reciver_utits_angle.Num > 0 then
       Alter Control DNA_TypeAngle Value settings_reciver_utits_angle.Num
    end if
+
+   Alter Control DNA_OnlyEmpty value updateOnlyEmpty
+   Alter Control DNA_reverseLine value reverseCoordinate
 End Sub
 
 
@@ -521,6 +546,24 @@ Sub LoadIniNear
    if GetIniKey <> "" Then
       round_units_angle = GetIniKey
    End If
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","reverseCoordinate","F")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          reverseCoordinate = true
+       Else
+          reverseCoordinate = false
+       End If
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","updateOnlyEmpty","T")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          updateOnlyEmpty = true
+       Else
+          updateOnlyEmpty = false
+       End If
+   End If
 End Sub
 
 
@@ -555,6 +598,10 @@ Sub SaveIniNear
 
    SetIniKey = IniWriteString(FullINIFileName,"settings_reciver_utits_angle", "Num",str$(settings_reciver_utits_angle.Num))
    SetIniKey = IniWriteString(FullINIFileName,"settings_reciver_utits_angle", "Name",str$(settings_reciver_utits_angle.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","reverseCoordinate",str$(reverseCoordinate))
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","updateOnlyEmpty",str$(updateOnlyEmpty))
 End Sub
 
 
@@ -580,7 +627,11 @@ function SelectProjectionNear(byval Metod as string, byval TableName as string, 
    Do Case Metod
       Case "Объект"
            If tableinfo(TableName, TAB_INFO_TEMP) Then
+                           if selectioninfo(SEL_INFO_NROWS) > 0 then
               realyTableName = selectioninfo(SEL_INFO_TABLENAME)
+            else
+                    realyTableName = TableName
+            end if
            Else
                realyTableName = TableName
            End If
@@ -597,8 +648,8 @@ End Function
 
 
 Function WhatSystemOfCoordinatesNear (byval TablesName as string) as string
-'                   Note tableinfo(TablesName, 3) 'TAB_INFO_TYPE = 3
-                        'Note TablesName
+'                Note TablesName
+'         Note tableinfo(TablesName, TAB_INFO_TYPE)
          If tableinfo(TablesName, 7) then  ' TAB_INFO_TEMP = 7
             TablesName = tableinfo(TablesName, 12) ' TAB_INFO_MAPPABLE_TABLE = 12
          end if
@@ -731,3 +782,11 @@ Function CreateTable() As string
 
     CreateTable = NameTable
 End Function
+
+Sub DNA_OnlyEmpty_OnClick
+
+End Sub
+
+Sub DNA_reverseLine_OnClick
+
+End Sub

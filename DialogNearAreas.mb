@@ -6,20 +6,20 @@ Sub DialogNearAreas_Execute
 
 Dialog
  Title "Удаленность участков - v1.0"
- Width 326 Height 207
+ Width 326 Height 229
  Calling DialogNearAreas_OnShow
 '//{$Controls}
    Control OKButton
      ID DNA_btnOK
      Title "Заполнить"
-     Position 212, 185
+     Position 211, 207
      Width 50 Height 15
      Calling DNA_btnOK_OnClick
 '//{$Control End}
    Control CancelButton
      ID DNA_btnCancel
      Title "Отмена"
-     Position 269, 185
+     Position 268, 207
      Width 50 Height 15
      Calling DNA_btnCancel_OnClick
 '//{$Control End}
@@ -70,12 +70,12 @@ Dialog
    Control StaticText
      ID DNA_StaticText1
      Title "___________________________________________________________________________________________________"
-     Position 5, 170
+     Position 4, 192
      Width 319 Height 8
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText2
-     Title "Поле для расстояния"
+     Title "Поле для расстояния*"
      Position 12, 126
      Width 77 Height 8
 '//{$Control End}
@@ -89,7 +89,7 @@ Dialog
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText3
-     Title "Поле для направления"
+     Title "Поле для направления*"
      Position 12, 148
      Width 81 Height 8
 '//{$Control End}
@@ -121,7 +121,7 @@ Dialog
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText7
-     Title "Поле для адреса"
+     Title "Поле для адреса*"
      Position 12, 104
      Width 64 Height 8
 '//{$Control End}
@@ -140,6 +140,22 @@ Dialog
      Width 125 Height 13
      Value 0
      Calling DNA_FieldAngle_OnClick
+'//{$Control End}
+   Control CheckBox
+     ID DNA_OnlyEmpty
+     Title "Пропускать объекты с не пустым полем адреса"
+     Position 11, 179
+     Width 185 Height 8
+     Value 0
+     Calling DNA_OnlyEmpty_OnClick
+'//{$Control End}
+   Control CheckBox
+     ID DNA_reverseLine
+     Title "Отразить направление"
+     Position 203, 179
+     Width 115 Height 8
+     Value 0
+     Calling DNA_reverseLine_OnClick
 '//{$Control End}
 
 If CommandInfo(CMD_INFO_DLG_OK) = 1 Then

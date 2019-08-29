@@ -21,6 +21,8 @@ Define   DNA_StaticText6   16
 Define   DNA_StaticText7   17
 Define   DNA_FieldDistance   18
 Define   DNA_FieldAngle   19
+Define   DNA_OnlyEmpty   20
+Define   DNA_reverseLine   21
 
 '//Dialog DialogNearAreas Handlers Declaration
 Declare Sub DialogNearAreas_Execute
@@ -39,3 +41,5 @@ Declare Sub DNA_UnitsDistance_OnClick
 Declare Sub DNA_TypeAngle_OnClick
 Declare Sub DNA_FieldDistance_OnClick
 Declare Sub DNA_FieldAngle_OnClick
+Declare Sub DNA_OnlyEmpty_OnClick
+Declare Sub DNA_reverseLine_OnClick

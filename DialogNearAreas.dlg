@@ -1,6 +1,6 @@
 Dialog
  Title "Удаленность участков - v1.0"
- Width 505 Height 375
+ Width 505 Height 411
  Position 603, 271
  Calling DialogNearAreas_OnShow
 CenterDisplay
@@ -8,14 +8,14 @@ CenterDisplay
    Control OKButton
      ID DNA_btnOK
      Title "Заполнить"
-     Position 318, 301
+     Position 316, 336
      Width 75 Height 25
      Calling DNA_btnOK_OnClick
 '//{$Control End}
    Control CancelButton
      ID DNA_btnCancel
      Title "Отмена"
-     Position 404, 301
+     Position 402, 336
      Width 75 Height 25
      Calling DNA_btnCancel_OnClick
 '//{$Control End}
@@ -68,12 +68,12 @@ Component=1
    Control StaticText
      ID DNA_StaticText1
      Title "___________________________________________________________________________________________________"
-     Position 8, 277
+     Position 6, 312
      Width 478 Height 13
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText2
-     Title "Поле для расстояния"
+     Title "Поле для расстояния*"
      Position 18, 205
      Width 115 Height 13
 '//{$Control End}
@@ -87,7 +87,7 @@ Component=1
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText3
-     Title "Поле для направления"
+     Title "Поле для направления*"
      Position 18, 240
      Width 122 Height 13
 '//{$Control End}
@@ -119,7 +119,7 @@ Component=1
 '//{$Control End}
    Control StaticText
      ID DNA_StaticText7
-     Title "Поле для адреса"
+     Title "Поле для адреса*"
      Position 18, 169
      Width 96 Height 13
 '//{$Control End}
@@ -138,4 +138,20 @@ Component=1
      Width 188 Height 21
      Value 0
      Calling DNA_FieldAngle_OnClick
+'//{$Control End}
+   Control CheckBox
+     ID DNA_OnlyEmpty
+     Title "Пропускать объекты с не пустым полем адреса"
+     Position 17, 291
+     Width 277 Height 13
+     Value 0
+     Calling DNA_OnlyEmpty_OnClick
+'//{$Control End}
+   Control CheckBox
+     ID DNA_reverseLine
+     Title "Отразить направление"
+     Position 305, 291
+     Width 173 Height 13
+     Value 0
+     Calling DNA_reverseLine_OnClick
 '//{$Control End}

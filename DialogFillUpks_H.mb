@@ -142,6 +142,7 @@ Sub DialogFillUpksbtnOK_OnClick
    MsgString = "Расчет УПКС..."
 
    select * from table_zu into work_table noselect
+   ' select * from work_table order by work_table.COL(field_zu_kad_num.Num) into work_table noselect 'Сортировка для уменьшения обращений к коэффициентам
 
    select * from table_upks into tmp_rows_upks noselect
 
@@ -224,6 +225,12 @@ End Sub
 
 Function FillKoeff(byval knum as string, kf() as KoeffInfo) as logical
    dim colNum, i as integer
+
+   if (kf(1).knum = knum and knum <> "") then
+      FillKoeff = true
+      if Debug then Print "   finding " + knum + " in " + table_upks + " / " + field_upks_kad_num.Name + " +++ Equal to the previous" end if
+      Exit function
+   end if
 
    select * from tmp_rows_upks where tmp_rows_upks.COL(field_upks_kad_num.Num) = knum into knum_row noselect
 
