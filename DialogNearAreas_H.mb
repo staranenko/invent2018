@@ -81,6 +81,8 @@ dim round_units_angle as string
 
 dim result_table as string
 
+Dim reverseCoordinate, updateOnlyEmpty as logical
+
 Sub DialogNearAreas_OnShow
    Call LoadIniNear
 
@@ -145,10 +147,13 @@ Sub DNA_btnOK_OnClick
    Call GetDialogElementsNear
    Call SaveIniNear
 
-   MsgString = "Расчет УПКС..."
+   MsgString = "Расчет направлений и удаленности..."
 
    select * from table_reciver into work_table_reciver noselect
-   select * from work_table_reciver where work_table_reciver.COL(field_reciver_address.Num) = "" into work_table_reciver noselect
+
+   if updateOnlyEmpty then
+      select * from work_table_reciver where work_table_reciver.COL(field_reciver_address.Num) = "" into work_table_reciver noselect
+   end if
 
    if Debug then Print "Будет обработано " + str$(TableInfo(work_table_reciver, TAB_INFO_NROWS)) + " строк." end if
 
@@ -186,6 +191,7 @@ Sub MainThreadNear
    dim firstX, firstY, secondX, secondY, angle, direction, distance, distance_placeholder as float
    dim angle_str, direction_str as string
    dim address as string
+   dim tmpX, tmpY as float
 
    start_time = Timer()
 
@@ -213,6 +219,16 @@ Sub MainThreadNear
          firstY = CentroidY(one_row_reciver.obj)
          secondX = ObjectNodeX(result_table_tmp.obj, 1, 2)
          secondY = ObjectNodeY(result_table_tmp.obj, 1, 2)
+      end if
+
+      if reverseCoordinate then
+         tmpX = secondX
+         secondX = firstX
+         firstX = tmpX
+
+         tmpY = secondY
+         secondY = firstY
+         firstY = tmpY
       end if
 
       Do case settings_reciver_utits_angle.Name
@@ -521,6 +537,24 @@ Sub LoadIniNear
    if GetIniKey <> "" Then
       round_units_angle = GetIniKey
    End If
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","reverseCoordinate","F")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          reverseCoordinate = true
+       Else
+          reverseCoordinate = false
+       End If
+   End If
+
+   GetIniKey = IniReadString(FullINIFileName,"Параметры","updateOnlyEmpty","T")
+   if GetIniKey <> "" Then
+       If GetIniKey = "T" Then
+          updateOnlyEmpty = true
+       Else
+          updateOnlyEmpty = false
+       End If
+   End If
 End Sub
 
 
@@ -555,6 +589,10 @@ Sub SaveIniNear
 
    SetIniKey = IniWriteString(FullINIFileName,"settings_reciver_utits_angle", "Num",str$(settings_reciver_utits_angle.Num))
    SetIniKey = IniWriteString(FullINIFileName,"settings_reciver_utits_angle", "Name",str$(settings_reciver_utits_angle.Name))
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(reverseCoordinate))
+
+   SetIniKey = IniWriteString(FullINIFileName,"Параметры","Debug",str$(updateOnlyEmpty))
 End Sub
 
 
@@ -580,7 +618,11 @@ function SelectProjectionNear(byval Metod as string, byval TableName as string, 
    Do Case Metod
       Case "Объект"
            If tableinfo(TableName, TAB_INFO_TEMP) Then
+           		if selectioninfo(SEL_INFO_NROWS) > 0 then
               realyTableName = selectioninfo(SEL_INFO_TABLENAME)
+            else
+            	realyTableName = TableName
+            end if
            Else
                realyTableName = TableName
            End If
@@ -597,8 +639,8 @@ End Function
 
 
 Function WhatSystemOfCoordinatesNear (byval TablesName as string) as string
-'                   Note tableinfo(TablesName, 3) 'TAB_INFO_TYPE = 3
-                        'Note TablesName
+'		Note TablesName
+'         Note tableinfo(TablesName, TAB_INFO_TYPE)
          If tableinfo(TablesName, 7) then  ' TAB_INFO_TEMP = 7
             TablesName = tableinfo(TablesName, 12) ' TAB_INFO_MAPPABLE_TABLE = 12
          end if
